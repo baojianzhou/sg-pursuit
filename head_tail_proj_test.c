@@ -72,7 +72,7 @@ void test_head_proj_exact() {
     int m = graph->m, verbose = 0;
     double C = 2 * (sparsity - 1.) * 100., delta = 1. / 169.;
     double err_tol = 1e-6, epsilon = 1e-6, run_time = 0.0;
-    GraphStat *head_stat = make_graph_stat(n);
+    GraphStat *head_stat = make_graph_stat(n, m);
     head_proj_exact(
             graph->edges, graph->costs, graph->prizes, g, C, delta, max_iter,
             err_tol, root, pruning, epsilon, n, m, verbose, head_stat);
@@ -92,7 +92,7 @@ void test_head_proj_approx() {
     int m = graph->m, verbose = 0;
     double C = 2 * (sparsity - 1.) * graph->costs[0], delta = 1. / 169.;
     double err_tol = 1e-6, epsilon = 1e-6, run_time = 0.0;
-    GraphStat *head_stat = make_graph_stat(n);
+    GraphStat *head_stat = make_graph_stat(n, m);
     head_proj_approx(
             graph->edges, graph->costs, graph->prizes, g, C, delta, max_iter,
             err_tol, root, pruning, epsilon, n, m, verbose, head_stat);
@@ -112,7 +112,7 @@ void test_tail_proj_exact() {
     int m = graph->m, verbose = 0;
     double C = 2 * (sparsity - 1.) * graph->costs[0], nu = 2.5, err_tol = 1e-6;
     double epsilon = 1e-6, run_time = 0.0;
-    GraphStat *tail_stat = make_graph_stat(n);
+    GraphStat *tail_stat = make_graph_stat(n, m);
     tail_proj_exact(
             graph->edges, graph->costs, graph->prizes, g, C, nu,
             max_iter, err_tol, root, pruning, epsilon, n, m, verbose,
@@ -133,7 +133,7 @@ void test_tail_proj_approx() {
     int m = graph->m, verbose = 0;
     double C = 2 * (sparsity - 1.) * graph->costs[0], nu = 2.5, err_tol = 1e-6;
     double epsilon = 1e-6, run_time = 0.0;
-    GraphStat *tail_stat = make_graph_stat(n);
+    GraphStat *tail_stat = make_graph_stat(n, m);
     tail_proj_approx(
             graph->edges, graph->costs, graph->prizes, g, C, nu, max_iter,
             err_tol, root, pruning, epsilon, n, m, verbose, tail_stat);
