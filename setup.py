@@ -17,7 +17,7 @@ setup(
     # sparse_learning package.
     name='sparse_learning',
     # current version is 0.2.1
-    version='0.2.3',
+    version='0.2.4',
     # this is a wrapper of head and tail projection.
     description='A wrapper for sparse learning algorithms.',
     # a long description should be here.
@@ -35,7 +35,6 @@ setup(
                  "License :: OSI Approved :: MIT License",
                  "Operating System :: POSIX :: Linux",),
     # specify requirements of your package here
-    # will add openblas in later version.
     install_requires=['numpy'],
     headers=['c/head_tail_proj.h', 'c/fast_pcst.h'],
     # define the extension module
