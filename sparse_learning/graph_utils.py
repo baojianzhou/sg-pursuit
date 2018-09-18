@@ -115,8 +115,10 @@ def draw_graph(sub_graph, edges, length, width):
             G.add_node(index)
             pos[index] = (j, length - i)
             index += 1
-    nx.draw_networkx_nodes(G, pos, node_size=100, nodelist=range(33 * 33), node_color='gray')
-    nx.draw_networkx_nodes(G, pos, node_size=100, nodelist=sub_graph, node_color='b')
+    nx.draw_networkx_nodes(G, pos, node_size=100,
+                           nodelist=range(33 * 33), node_color='gray')
+    nx.draw_networkx_nodes(G, pos, node_size=100,
+                           nodelist=sub_graph, node_color='b')
     nx.draw_networkx_edges(G, pos, alpha=0.5, width=2)
     plt.axis('off')
     plt.show()

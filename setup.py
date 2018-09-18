@@ -39,7 +39,7 @@ setup(
     install_requires=['numpy'],
     headers=['c/head_tail_proj.h', 'c/fast_pcst.h'],
     # define the extension module
-    ext_modules=[Extension('sparse_module',
+    ext_modules=[Extension('proj_module',
                            sources=src_files,
                            language="C",
                            extra_compile_args=compile_args,
