@@ -17,7 +17,7 @@ setup(
     # sparse_learning package.
     name='sparse_learning',
     # current version is 0.2.1
-    version='0.2.2',
+    version='0.2.3',
     # this is a wrapper of head and tail projection.
     description='A wrapper for sparse learning algorithms.',
     # a long description should be here.
