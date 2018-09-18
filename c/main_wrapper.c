@@ -198,7 +198,7 @@ static PyObject *proj_pcst(PyObject *self, PyObject *args) {
     GraphStat *stat = make_graph_stat((int) n, (int) m);
     PCST *pcst = make_pcst(edges, prizes, costs, root,
                            g, epsilon, GWPruning, (int) n, (int) m, verbose);
-    run_pcst(pcst, stat->re_nodes, stat->re_edges);
+    run_pcst(pcst, stat->re_nodes, stat->re_edges), free_pcst(pcst);
     PyObject *results = PyTuple_New(2);
     PyObject *re_nodes = PyList_New(stat->re_nodes->size);
     PyObject *re_edges = PyList_New(stat->re_edges->size);
@@ -210,6 +210,7 @@ static PyObject *proj_pcst(PyObject *self, PyObject *args) {
     }
     PyTuple_SetItem(results, 0, re_nodes);
     PyTuple_SetItem(results, 1, re_edges);
+    free(edges), free(stat);
     return results;
 }
 

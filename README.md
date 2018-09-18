@@ -1,5 +1,6 @@
 # sg-pursuit
 
+# python setup.py build_ext --inplace
 This package collects sparse learning related algorithms. 
 In this first initial version, it contains the following projection code:
 
