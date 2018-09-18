@@ -18,12 +18,15 @@ find_package(PythonLibs 2.7 REQUIRED)
 message(${PYTHON_INCLUDE_DIRS})
 include_directories(${PYTHON_INCLUDE_DIRS})
 
-set(SRC_PCST fast_pcst.c fast_pcst.h)
-add_executable(test_fast_pcst fast_pcst_test.c ${SRC_PCST})
+set(SRC_PCST c/fast_pcst.c c/fast_pcst.h)
+add_executable(test_fast_pcst c/fast_pcst_test.c ${SRC_PCST})
 target_link_libraries(test_fast_pcst -std=c11 -Wall -Wextra -O3 -lm)
 
-set(SRC_Head head_tail_proj.c head_tail_proj.h)
-add_executable(test_head_tail head_tail_proj_test.c ${SRC_PCST} ${SRC_Head})
+set(SRC_Head c/head_tail_proj.c c/head_tail_proj.h)
+add_executable(test_head_tail c/head_tail_proj_test.c ${SRC_PCST} ${SRC_Head})
 target_link_libraries(test_head_tail -std=c11 -Wall -Wextra -O3 -lm)
 
 
+add_library(sparse_module SHARED c/main_wrapper.c ${SRC_PCST} ${SRC_Head})
+target_link_libraries(sparse_module python2.7 -std=c11 -Wall -Wextra -O3
+        -I${NUMPY_INCLUDE} -lm -lpython2.7 -lopenblas -lpthread)
