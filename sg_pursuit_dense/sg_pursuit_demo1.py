@@ -2,7 +2,7 @@ from sparse_learning.proj_algo import head_proj
 from sparse_learning.proj_algo import tail_proj
 import time
 import random
-from fucntions.EMS import *
+from functions.EMS import *
 
 
 

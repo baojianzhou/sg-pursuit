@@ -1,12 +1,16 @@
 import numpy as np
 import copy
 from utils.base_function import *
+
+
+sigmas1=0.1
+sigmas2=1.0
 """
 PCA score : \sigma_{1..n} (w_iy - xWy/1^Tx)^2 - lambda*xAx/1^Tx
     input: x,y,W numpy arrays
     output: float value
 """
-def PCA_getFuncValue(x,y,A,W,lambda0,sigmas1,sigmas2):
+def PCA_getFuncValue(x,y,W,A,lambda0):
     funcValue=0.0
     if len(x)!=len(W) or len(y)!=len(W[0]):
         print("Error:Invalid parameter....(PCA_getFuncValue)")
@@ -23,7 +27,7 @@ def PCA_getFuncValue(x,y,A,W,lambda0,sigmas1,sigmas2):
     yT1=np.sum(y)
     xTW = x.dot(W)
     xW_1Tx=xTW*(1.0/xT1)
-    term1=(1.0/sigmas1)*np.multiply(W-np.outer(Ix,xTW),W-np.outer(Ix,xTW)).dot(y)
+    term1=(1.0/sigmas1)*np.multiply(W-np.outer(Ix,xW_1Tx),W-np.outer(Ix,xW_1Tx)).dot(y)
     term2=(1.0/sigmas2)*np.multiply(W,W).dot(y)
     diff=term1-term2
 
@@ -42,7 +46,7 @@ PCA gradient of x
     input: x,y,W, numpy arrays
     output: gradient vector,is a numpy array
 """
-def PCA_gradientX(x,y,W,A,lambda0,sigmas1,sigmas2,adjust=0.0):
+def PCA_gradientX(x,y,W,A,lambda0,adjust=0.0):
     if len(x)!=len(W) or len(y)!=len(W[0]):
         print("Error:Invalid parameter....(PCA_getFuncValue)")
         return None
@@ -86,7 +90,7 @@ PCA gradient of y
 """
 
 
-def PCA_gradientY(x,y,W,A,lambda0,sigmas1,sigmas2,adjust=0.0):
+def PCA_gradientY(x,y,W,A,lambda0=0.0,adjust=0.0):
     if len(x) != len(W) or len(y) != len(W[0]):
         print("Error:Invalid parameter....(PCA_getFuncValue)")
         return None
