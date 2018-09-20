@@ -144,8 +144,3 @@ def updatedMinimizerY(gradientY,indicatorY,y,stepSize,bound=5):
 
     return normalizedY
 
-def getIndicateVector(S,ssize):
-    if ssize<=0: return None
-    x=np.zeros(ssize)
-    for i in S: x[i]=1.0
-    return x

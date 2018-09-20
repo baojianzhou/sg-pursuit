@@ -1,12 +1,8 @@
-import numpy as np
 from sparse_learning.proj_algo import head_proj
 from sparse_learning.proj_algo import tail_proj
-from sparse_learning.graph_utils import simu_graph
-import os,sys
-import copy
 import time
 import random
-from EMS import *
+from fucntions.EMS import *
 
 
 
@@ -19,6 +15,9 @@ grad_i { = 0       1) if grad_i<0 and x_i=1
 
 """
 def normalized_Gradient(x,gradient):
+    if gradient==None or len(gradient)==0 or x==None or len(x)==0:
+        print("Error: gradient/x is None...  (normalized_Gradient)")
+
     normalizedGradient=np.zeros_like(x)
     for i in range(len(gradient)):
         if gradient[i]<0.0 and x[i]==1.0:
@@ -70,7 +69,7 @@ Input:
 output:
 
 """
-def SG_Pursuit(edges,edgeCost,k,s,W,maxIter=10,g=1.0):
+def SG_Pursuit(edges,edgeCost,k,s,W,maxIter=10,g=1.0,B=3.):
     start_time=time.time()
     num_nodes=len(W)
     num_feats=len(W[0])
@@ -90,7 +89,7 @@ def SG_Pursuit(edges,edgeCost,k,s,W,maxIter=10,g=1.0):
         gradientFx = normalized_Gradient(xi,gradientFx)
         gradientFy = normalized_Gradient(yi,gradientFy)
         """Algorithm 1: line 6 """
-        (result_nodes, result_edges, p_x) = head_proj(edges=edges, weights=edgeCost, x=gradientFx, g=g, s=k, budget=3.,
+        (result_nodes, result_edges, p_x) = head_proj(edges=edges, weights=edgeCost, x=gradientFx, g=g, s=k, budget=B,
                        delta=1. / 169., err_tol=1e-6, max_iter=30, root=-1,
                        pruning='strong', epsilon=1e-6, verbose=0)
         gammaX=set(result_nodes)
