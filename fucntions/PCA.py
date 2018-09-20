@@ -70,8 +70,10 @@ def PCA_gradientX(x,y,W,A,lambda0,sigma1,sigma2,adjust=0.0):
     yT1 = np.sum(y)
 
     xW_1Tx = xTW * (1.0 / xT1)
-    term1 = (1.0 / (sigma1+adjust)) * np.multiply(W - np.outer(Ix, xTW), W - np.outer(Ix, xTW)).dot(y)
+    term1 = (1.0 / (sigma1+adjust)) * np.multiply(W - np.outer(Ix, xW_1Tx), W - np.outer(Ix, xW_1Tx)).dot(y)
     term2 = (1.0 / sigma2) * np.multiply(W, W).dot(y)
+    ATx = x.dot(A)
+    ATx_1Tx = 1.0 / xT1 * ATx
     diff = term1 - term2
 
     for i in len(gradient):
