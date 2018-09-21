@@ -173,8 +173,8 @@ def sg_pursuit_algo(para):
         start_time = time.time()
         re_head = head_proj(
             edges=edges, weights=costs, x=grad_x, g=1, s=k, budget=k - 1.,
-            delta=1. / 169., max_iter=50, err_tol=1e-6, root=-1,
-            pruning='strong', epsilon=1e-6, verbose=0)
+            delta=1. / 169., max_iter=100, err_tol=1e-8, root=-1,
+            pruning='strong', epsilon=1e-10, verbose=0)
         re_nodes, re_edges, p_x = re_head
         run_time_head_tail += time.time() - start_time
         gamma_x, gamma_y = set(re_nodes), identify_direction(grad_y, 2 * s)
@@ -185,8 +185,8 @@ def sg_pursuit_algo(para):
         start_time = time.time()
         re_tail = tail_proj(
             edges=edges, weights=costs, x=bx, g=1, s=k, budget=k - 1., nu=2.5,
-            max_iter=50, err_tol=1e-6, root=-1, pruning='strong', verbose=0,
-            epsilon=1e-6)
+            max_iter=100, err_tol=1e-8, root=-1, pruning='strong', verbose=0,
+            epsilon=1e-10)
         re_nodes, re_edges, p_x = re_tail
         run_time_head_tail += time.time() - start_time
         psi_x, psi_y = re_nodes, identify_direction(by, s)
