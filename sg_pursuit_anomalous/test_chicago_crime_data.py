@@ -124,13 +124,9 @@ class FuncEMS(object):
     def update_minimizer(grad_x, indicator_x, x, bound, step_size):
         normalized_x = (x - step_size * grad_x) * indicator_x
         sorted_indices = np.argsort(normalized_x)
-        num_non_posi = 0
-        for j in range(len(x)):
-            if normalized_x[j] <= 0.0:
-                num_non_posi += 1
-                normalized_x[j] = 0.
-            elif normalized_x[j] > 1.:
-                normalized_x[j] = 1.
+        num_non_posi = len(np.where(normalized_x <= 0.0))
+        normalized_x[normalized_x <= 0.0] = 0.
+        normalized_x[normalized_x > 1.] = 1.
         if num_non_posi == len(x):
             print('siga-1 is too large and all values'
                   ' in the gradient are non-positive.')
