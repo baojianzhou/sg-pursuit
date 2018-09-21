@@ -219,6 +219,7 @@ def run_single_process(para):
             chicago_data['costs'], 5,
             chicago_data['true_sub_graph'],
             chicago_data['true_sub_feature'])
+    start_time = time.time()
     xt, yt = sg_pursuit_algo(para)
     n_pre_rec_fm = node_pre_rec_fm(
         true_nodes=chicago_data['true_sub_graph'],
@@ -228,7 +229,8 @@ def run_single_process(para):
         pred_nodes=np.nonzero(yt)[0])
     print(n_pre_rec_fm)
     print(f_pre_rec_fm)
-    return n_pre_rec_fm, f_pre_rec_fm
+    run_time = time.time() - start_time
+    return event_type, test_case, run_time, n_pre_rec_fm, f_pre_rec_fm
 
 
 def main():
@@ -239,11 +241,24 @@ def main():
     pool.close()
     pool.join()
     cPickle.dump(results_pool, open('../output/output_chicago.pkl', 'wb'))
+    summary_results = {'BATTERY': [[], [], []], 'BURGLARY': [[], [], []]}
     for result in results_pool:
-        pre, rec, fm = result[0]
+        event_type, test_case, run_time, n_pre_rec_fm, f_pre_rec_fm = result
+        summary_results[event_type][0].append(n_pre_rec_fm[2])
+        summary_results[event_type][1].append(f_pre_rec_fm[2])
+        summary_results[event_type][2].append(run_time)
+        pre, rec, fm = n_pre_rec_fm
         print('node_pre_rec_fm: %.4f %.4f %.4f' % (pre, rec, fm))
-        pre, rec, fm = result[1]
+        pre, rec, fm = f_pre_rec_fm
         print('feature_pre_rec_fm: %.4f %.4f %.4f' % (pre, rec, fm))
+    print('----- node-fm ---- attribute-fm ---- run_time -----')
+    print('BATTERY', np.mean(sorted(summary_results['BATTERY'][0])[1:51]),
+          np.mean(sorted(summary_results['BATTERY'][1])[1:51]),
+          np.mean(sorted(summary_results['BATTERY'][2])[1:51]))
+    print('BURGLARY', np.mean(sorted(summary_results['BURGLARY'][0])[1:51]),
+          np.mean(sorted(summary_results['BURGLARY'][1])[1:51]),
+          np.mean(sorted(summary_results['BURGLARY'][2])[1:51]))
+    print('run_time')
 
 
 if __name__ == '__main__':
