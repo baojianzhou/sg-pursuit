@@ -68,8 +68,8 @@ def data_convert_chicago_crime():
 
 
 def data_convert_yelp():
-    root_path = '/home/baojian/Yelp/'
-    for test_case, event_type in product([21], ['2014_2015']):
+    root_path = '/data/sg-pursuit-data/data/Yelp/'
+    for test_case, event_type in product(range(52), ['2014_2015']):
         data = {'test_case': test_case,
                 'n': 0,
                 'p': 0,
@@ -126,7 +126,7 @@ def data_convert_yelp():
         data['data_matrix'] = np.asarray(data['data_matrix'], dtype=np.float64)
         data['edges'] = np.asarray(data['edges'], dtype=int)
         data['costs'] = np.asarray(data['costs'], dtype=np.float64)
-        file_name = '../input/data_yelp/chicago_%s_case_%d.pkl' % \
+        file_name = '../input/data_yelp/yelp_%s_case_%d.pkl' % \
                     (event_type, test_case)
         bz2_f = bz2.BZ2File(file_name, 'wb')
         cPickle.dump(data, bz2_f)
