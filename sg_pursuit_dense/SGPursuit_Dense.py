@@ -29,14 +29,13 @@ def SG_Pursuit_Dense(edges, edgeCost, k, s, W,A,lambda0, maxIter=5, g=1.0, B=3.)
     # for i in random.choice(range(num_nodes), k): xi[i] = random.random()
     # for i in random.choice(range(num_feats), s): xi[i] = random.random()
     (xi,yi)=calcualte_initial_val(W,A,num_nodes,num_feats,k,s)
-    func_values = []
+    old_func_value=-1;
     for numOfIter in range(maxIter):
         print("SG-Pursuit: Iteration:------{}------".format(numOfIter))
 
-        func_values.append(PCA_getFuncValue(xi,yi,W,A,lambda0)) ##########
         # calcualte normalized gradient
-        gradientFx = PCA_gradientX(xi, yi, W)
-        gradientFy = PCA_gradientY(xi, yi, W)
+        gradientFx = PCA_gradientX(xi, yi,W,A,lambda0)
+        gradientFy = PCA_gradientY(xi, yi,W,A,lambda0)
         gradientFx = normalized_Gradient(xi, gradientFx)
         gradientFy = normalized_Gradient(yi, gradientFy)
         """Algorithm 1: line 6 """
@@ -52,7 +51,7 @@ def SG_Pursuit_Dense(edges, edgeCost, k, s, W,A,lambda0, maxIter=5, g=1.0, B=3.)
         """line 9"""
         omegaY = gammaY.union(getSupp(yi))
         """line 10"""
-        (bx, by) = PCA_multiGradientDecent4PCAScore(xi, yi, omegaX, omegaY, W, maxIter=1000, stepSize=0.01)
+        (bx, by) = PCA_multiGradientDecent4PCAScore(xi, yi, omegaX, omegaY, W,A,lambda0, maxIter=1000, stepSize=0.01)
         """line 11"""
         (result_nodes, result_edges, p_x) = tail_proj(edges=edges, weights=edgeCost, x=bx, g=g, s=k, root=-1,
                                                       max_iter=20, budget=3., nu=2.5)
@@ -70,12 +69,14 @@ def SG_Pursuit_Dense(edges, edgeCost, k, s, W,A,lambda0, maxIter=5, g=1.0, B=3.)
 
         func_value = PCA_getFuncValue(xi, yi, W)
 
-        gapX = np.sqrt(np.sum((xi - xOld) ** 2))
-        gapY = np.sqrt(np.sum((yi - yOld) ** 2))
+        if old_func_value==-1:
+            old_func_value=func_value
+        else:
+            if np.abs(old_func_value-func_value)<0.001:
+                break
+            else:
+                old_func_value=func_value
 
-
-        if (gapX < 1e-3 and gapY < 1e-3) or numOfIter > maxIter:
-            break
     running_time = time.time() - start_time
 
     return xi, yi, func_value, running_time

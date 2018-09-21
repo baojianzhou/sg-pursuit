@@ -122,15 +122,25 @@ def PCA_gradientY(x,y,W,A,lambda0=0.0,adjust=0.0):
 
     return gradient
 
-def PCA_multiGradientDecent4PCAScore(x0,y0,OmegaX,OmegaY,W,maxIter=1000,stepSize=0.01):
+def PCA_multiGradientDecent4PCAScore(x0,y0,OmegaX,OmegaY,W,A,lambda0,maxIter=1000,stepSize=0.1):
     print("Start argmin f(x,y) ...")
     indicatorX = getIndicateVector(OmegaX,len(x0))
-    indicatorY = getIndicateVector(OmegaY, len(x0))
+    indicatorY = getIndicateVector(OmegaY, len(y0))
     x=copy.deepcopy(x0)
     y=copy.deepcopy(y0)
     for i in xrange(maxIter):
-        gradientX=PCA_gradientX(x,y,W)
-        gradientY=PCA_gradientY(x,y,W)
+        t=0.0
+        while True:
+            gradientX=PCA_gradientX(x,y,W,A,lambda0,t*0.01)
+            t+=1.0
+            if np.min(gradientX)>0.0: break
+
+        t = 0.0
+        while True:
+            gradientY = PCA_gradientY(x, y, W, A, lambda0, t * 0.01)
+            t += 1.0
+            if np.min(gradientY) > 0.0: break
+
 
         xOld = copy.deepcopy(x)
         yOld = copy.deepcopy(y)
