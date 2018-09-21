@@ -9,7 +9,7 @@ from itertools import product
 from sparse_learning.proj_algo import head_proj
 from sparse_learning.proj_algo import tail_proj
 
-root_path = '../input/data_chicago/'
+root_path = '../input/data_yelp/'
 
 
 def node_pre_rec_fm(true_nodes, pred_nodes):
@@ -224,12 +224,14 @@ def run_single_process(para):
     n_pre_rec_fm = node_pre_rec_fm(
         true_nodes=yelp_data['true_sub_graph'],
         pred_nodes=np.nonzero(xt)[0])
-    print(n_pre_rec_fm)
+
     selected_words = []
     ind_words = {ind: word for (word, ind) in yelp_data['words_dict'].items()}
     sorted_indices = np.argsort(yt)
     for i in range(yelp_data['s']):
         selected_words.append(ind_words[sorted_indices[i]])
+    print('node precision recall f-measure: ', n_pre_rec_fm)
+    print('selected words: ', selected_words)
     run_time = time.time() - start_time
     return event_type, test_case, run_time, n_pre_rec_fm, selected_words
 
