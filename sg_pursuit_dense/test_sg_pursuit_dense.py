@@ -672,7 +672,7 @@ def test_varying_num_attr():
 
 
         print("VaryingAtt: %f %f %f %f\n"%(num_feat,np.mean(node_prf[2]),np.mean(feat_prf[2]),round(np.mean(running_times),2)))
-        with open("../output/result-VaryingAtt.txt","w") as op:
+        with open("../output/result-VaryingAtt.txt","a+") as op:
             op.write("VaryingAtt: %f %f %f %f\n"%(num_feat,np.mean(node_prf[2]),np.mean(feat_prf[2]),round(np.mean(running_times),2)))
 
 def test_varying_num_cluster():
@@ -798,7 +798,7 @@ def test_varying_cluster_size():
             num_jobs -= 1.0
 
         print("VaryingClusterSize: cluster size:%d - %d avg_node_fm:%f   avg_feat_fm%f avg_runtime:%f"%(cluster_sizes[0],cluster_sizes[0],np.mean(node_prf[2]),np.mean(feat_prf),np.mean(running_times)))
-        with open("../output/result-VaryingClusterSize.txt","w") as op:
+        with open("../output/result-VaryingClusterSize.txt","a+") as op:
             op.write("VaryingClusterSize %d_%d %f %f %f\n"%(cluster_sizes[0],cluster_sizes[0],np.mean(node_prf[2]),np.mean(feat_prf),round(np.mean(running_times),2)))
 
 
