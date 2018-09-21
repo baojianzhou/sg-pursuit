@@ -293,7 +293,6 @@ def main():
     num_cpu = int(sys.argv[1])
     input_paras = [_ for _ in product(['BATTERY', 'BURGLARY'], range(52))]
     pool = multiprocessing.Pool(processes=num_cpu)
-    run_single_process(('BATTERY', 33))
     results_pool = pool.map(run_single_process, input_paras)
     pool.close()
     pool.join()
