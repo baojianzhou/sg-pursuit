@@ -614,9 +614,10 @@ def adj_matrix(edges,n):
 
 def test_varying_num_attr():
     data_folder="../input/dense_supgraph/simu_fig4/"
-    with open("../output/result-VaryingAtt.txt", "a+") as op:
+    out_file="result-VaryingAtt-debug.txt"
+    with open("../output/"+out_file, "a+") as op:
         op.write("\n\n###  "+str(datetime.datetime.now())+"  ###\n")
-    for num_feat in [20,40,80,100][:]:
+    for num_feat in [20,40,80,100][:1]:
         node_prf=[[],[],[]]
         feat_prf=[[],[],[]]
         running_times=[]
@@ -626,14 +627,14 @@ def test_varying_num_attr():
         tasks = multiprocessing.Queue()
         results = multiprocessing.Queue()
         # Start consumers
-        num_consumers = 15  # number of cores.
-        print iter, 'Creating %d consumers' % num_consumers
+        num_consumers = 1  # number of cores.
+        print 'Creating %d consumers' % num_consumers
         consumers = [Consumer(tasks, results)
                      for i in range(num_consumers)]
         for w in consumers:
             w.start()
 
-        for case,data in datas.items()[:]:
+        for case,data in datas.items()[:5]:
             k=len(data["true_sub_graph"])/2
             s=len(data["true_sub_feature"])
             lambda0=5.0
@@ -671,9 +672,9 @@ def test_varying_num_attr():
 
 
 
-        print("VaryingAtt: %f %f %f %f\n"%(num_feat,np.mean(node_prf[2]),np.mean(feat_prf[2]),round(np.mean(running_times),2)))
-        with open("../output/result-VaryingAtt.txt","a+") as op:
-            op.write("VaryingAtt: %f %f %f %f\n"%(num_feat,np.mean(node_prf[2]),np.mean(feat_prf[2]),round(np.mean(running_times),2)))
+        print("VaryingAtt: %d %f %f %f\n"%(num_feat,np.mean(node_prf[2]),np.mean(feat_prf[2]),round(np.mean(running_times),2)))
+        with open("../output/"+out_file,"a+") as op:
+            op.write("VaryingAtt: %d %f %f %f\n"%(num_feat,np.mean(node_prf[2]),np.mean(feat_prf[2]),round(np.mean(running_times),2)))
 
 def test_varying_num_cluster():
     data_folder="../input/dense_supgraph/simu_fig4/"
