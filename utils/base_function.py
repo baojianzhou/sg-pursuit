@@ -1,6 +1,5 @@
 import numpy as np
-
-
+from functions.PCA import *
 def getSupp(x):
     return set(np.nonzero(x)[0])
 
@@ -70,3 +69,156 @@ def getIndicateVector(S,ssize):
     x=np.zeros(ssize)
     for i in S: x[i]=1.0
     return x
+
+
+"""
+rank nodes
+"""
+def ranknodes(nodes,k,A):
+    degrees=np.zeros(len(nodes))
+    rank=np.zeros(np.min([len(nodes),k]))
+    for i in range(len(nodes)):
+        for j in nodes:
+            if A[nodes[i]][j]>0.0:
+                degrees[i]+=1.0
+
+    indexes = degrees.argsort()[::-1]
+    for i in range(len(rank)):
+        rank[i]=nodes[indexes[i]]
+
+    return rank
+
+
+
+"""
+
+"""
+def get_fun(X,Y,W,n,p,lambda0=0):
+    x=np.zeros(n)
+    y=np.zeros(p)
+
+    for i in X:
+        x[i]=1.0
+    for i in Y:
+        y[i]=1.0
+
+    return PCA_getFuncValue(x,y,W,None,lambda0)#A,W,lambda0
+
+"""
+Input : A: adjacency matrix
+        k: the total sparsity of x
+        s: the maximum number of |y|<s
+
+"""
+def calcualte_initial_val(W,A,n,p,k,s):
+
+
+    res=[]
+    scores=[]
+    trials=[2,3,4,5,6]
+
+    x0=np.zeros(n)
+    y0=np.zeros(p)
+
+    for i in range(len(trials)):
+        res.append([])
+        scores.append([0.0 for i in range(p)])
+
+    for j in range(p):
+
+        for i in range(n):
+            nns=set(np.nonzero(A[i])[0])
+            dists=[0.0 for i in range(len(nns))]
+            for kk in range(len(nns)):
+                dists[kk]=np.abs(W[kk][j]-W[i][j])
+
+            if len(nns)>1.0:
+                x0[i]=np.percentile(dists,50)*-1.0
+            else:
+                x0[i] = np.mean(dists)*-1.0
+
+        indexes = x0.argsort()[::-1]
+
+        ii=0
+        for r in trials:
+            S=[]
+            for i in range(k*r):
+                S.append(indexes[i])
+            if len(S)>0:
+                rank=ranknodes(S,k,A)
+                fval=get_fun(rank,[j],0)
+                scores[ii][j]=fval*-1
+                res[ii].append(rank)
+            else:
+                scores[ii][j]=-1000
+                res[ii].append([])
+            ii+=1.0
+
+    fval=-1
+    Y=[]
+    X=[]
+    for ii in range(len(trials)):
+        indexes = scores[ii].argsort()[::-1]
+        Y1=[]
+        for i in range(s):
+            if scores[ii][indexes[i]]>-1000:
+                Y1.append(indexes[i])
+
+        X1=res[ii][indexes[0]]
+        fval1=get_fun(X1,Y1,0)
+        if fval==-1 or fval>fval1:
+            Y=[]
+            for i in Y1:
+                Y.append(i)
+            X=[]
+            for i in X1:
+                X.append(i)
+            fval=fval1
+
+        for j in range(s):
+            X1=res[ii][indexes[j]]
+            Y1=[]
+            Y1.append(indexes[j])
+            fval1=get_fun(X1,Y1,0.0)
+
+            if fval == -1 or fval > fval1:
+                Y = []
+                for i in Y1:
+                    Y.append(i)
+                X = []
+                for i in X1:
+                    X.append(i)
+                fval = fval1
+
+        for j in range(2*s):
+            if indexes[j] not in Y:
+                YY=[]
+                for i in Y:
+                    YY.append(i)
+                YY.add(indexes[j])
+                fval1=get_fun(X,YY,0.0)
+                if fval == -1 or fval > fval1:
+                    Y = []
+                    for i in YY:
+                        Y.append(i)
+                    fval=fval1
+
+    for i in X: x0[i]=1.0
+    for i in Y: y0[i]=1.0
+
+    if np.sum(x0) == 0:
+        print("NOTICE: no good initialization of x can be idetnfied!!!!!!!!!!!!!!!!!!!!!!!!!")
+        x0[0] = 1
+        x0[1] = 1
+        x0[2] = 1
+
+    if np.sum(y0) == 0:
+        print("NOTICE: no good initialization of y can be idetnfied!!!!!!!!!!!!!!!!!!!!!!!!!")
+        y0[0] = 1
+    return x0,y0
+
+
+
+
+
+

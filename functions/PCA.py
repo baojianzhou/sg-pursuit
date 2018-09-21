@@ -1,12 +1,16 @@
 import numpy as np
 import copy
 from utils.base_function import *
+
+
+sigmas1=0.1
+sigmas2=1.0
 """
 PCA score : \sigma_{1..n} (w_iy - xWy/1^Tx)^2 - lambda*xAx/1^Tx
     input: x,y,W numpy arrays
     output: float value
 """
-def PCA_getFuncValue(x,y,A,W,lambda0,sigma1,sigma2):
+def PCA_getFuncValue(x,y,W,A,lambda0):
     funcValue=0.0
     if len(x)!=len(W) or len(y)!=len(W[0]):
         print("Error:Invalid parameter....(PCA_getFuncValue)")
@@ -23,8 +27,8 @@ def PCA_getFuncValue(x,y,A,W,lambda0,sigma1,sigma2):
     yT1=np.sum(y)
     xTW = x.dot(W)
     xW_1Tx=xTW*(1.0/xT1)
-    term1=(1.0/sigma1)*np.multiply(W-np.outer(Ix,xTW),W-np.outer(Ix,xTW)).dot(y)
-    term2=(1.0/sigma2)*np.multiply(W,W).dot(y)
+    term1=(1.0/sigmas1)*np.multiply(W-np.outer(Ix,xW_1Tx),W-np.outer(Ix,xW_1Tx)).dot(y)
+    term2=(1.0/sigmas2)*np.multiply(W,W).dot(y)
     diff=term1-term2
 
     funcValue=diff.dot(x)
@@ -42,7 +46,7 @@ PCA gradient of x
     input: x,y,W, numpy arrays
     output: gradient vector,is a numpy array
 """
-def PCA_gradientX(x,y,W,A,lambda0,sigma1,sigma2,adjust=0.0):
+def PCA_gradientX(x,y,W,A,lambda0,adjust=0.0):
     if len(x)!=len(W) or len(y)!=len(W[0]):
         print("Error:Invalid parameter....(PCA_getFuncValue)")
         return None
@@ -52,7 +56,7 @@ def PCA_gradientX(x,y,W,A,lambda0,sigma1,sigma2,adjust=0.0):
     elif  np.sum(y):
         print("Error:Y vector all zeros....(PCA_getFuncValue)")
         return None
-    gradient=np.zeros(len(x))
+
 
     non_zero_count=0.0
     for i in range(len(x)):
@@ -66,29 +70,27 @@ def PCA_gradientX(x,y,W,A,lambda0,sigma1,sigma2,adjust=0.0):
     Ix = np.ones(len(x))
     xT1 = np.sum(x)
 
-
-    yT1 = np.sum(y)
-
     xW_1Tx = xTW * (1.0 / xT1)
-    term1 = (1.0 / (sigma1+adjust)) * np.multiply(W - np.outer(Ix, xTW), W - np.outer(Ix, xTW)).dot(y)
-    term2 = (1.0 / sigma2) * np.multiply(W, W).dot(y)
-    diff = term1 - term2
-
-    for i in len(gradient):
-        gradient[i]=-xTWy*(term1[i]-term2)
-
+    term1 = (1.0 / (sigmas1+adjust)) * np.multiply(W - np.outer(Ix, xW_1Tx), W - np.outer(Ix, xW_1Tx)).dot(y)
+    term2 = (1.0 / sigmas2) * np.multiply(W, W).dot(y)
+    ATx = x.dot(A)
+    ATx_1Tx = 1.0 / xT1 * ATx
+    dense_term=lambda0*(ATx_1Tx-(1.0/(xT1*xT1)*ATx.dot(x)))*Ix
+    gradient=term1-term2-dense_term
 
     return gradient
 
 
+
 """
-PCA gradient of x
+PCA gradient of y
     input: x,y,W, numpy arrays
     output: gradient vector,is a numpy array
+    \delta_x f(x,y)=2* \sigma_{1..n} (w_i - W^Ty/1^Tx)(w_i - W^Ty/1^Tx)^T.y
 """
 
 
-def PCA_gradientY(x, y, W):
+def PCA_gradientY(x,y,W,A,lambda0=0.0,adjust=0.0):
     if len(x) != len(W) or len(y) != len(W[0]):
         print("Error:Invalid parameter....(PCA_getFuncValue)")
         return None
@@ -98,15 +100,25 @@ def PCA_gradientY(x, y, W):
     elif np.sum(y):
         print("Error:Y vector all zeros....(PCA_getFuncValue)")
         return None
-    gradient = np.zeros(len(y))
+
+
+    non_zero_count=0.0
+    for i in range(len(x)):
+        if x[i]>0.0 and x[i]<1.0: non_zero_count+=1.0
+    if non_zero_count>0.0:
+        xTW = x.dot(W)
+    else:
+        xTW = median_xTW(x,W)
+
+
+    Ix = np.ones(len(x))
     xT1 = np.sum(x)
-    yT1 = np.sum(y)
-    xTWy = (x.dot(W)).dot(y)
-    xW = x.dot(W)
-    term1 = (2.0 / (xT1 * yT1)) * xW  # (2.0/xT1*yT1)*W.Y
-    term2 = xTWy / (xT1 * xT1 * yT1)
-    for i in len(gradient):
-        gradient[i] = -xTWy * (term1[i] - term2)
+
+    xW_1Tx = xTW * (1.0 / xT1)
+    term1 = (1.0 / (sigmas1+adjust)) * np.multiply(W.transpose() - np.outer(xW_1Tx,Ix), W.transpose() - np.outer(xW_1Tx,Ix)).dot(y)
+    term2 = (1.0 / sigmas2) * np.multiply(W.transpose(), W.transpose()).dot(x)
+
+    gradient=term1-term2
 
     return gradient
 
