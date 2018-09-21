@@ -1,5 +1,6 @@
 import numpy as np
 from functions.PCA import *
+
 def getSupp(x):
     return set(np.nonzero(x)[0])
 
@@ -70,6 +71,20 @@ def getIndicateVector(S,ssize):
     for i in S: x[i]=1.0
     return x
 
+def node_pre_rec_fm(true_nodes, pred_nodes):
+    """ Return the precision, recall and f-measure.
+    :param true_nodes:
+    :param pred_nodes:
+    :return: precision, recall and f-measure """
+    true_nodes, pred_nodes = set(true_nodes), set(pred_nodes)
+    pre, rec, fm = 0.0, 0.0, 0.0
+    if len(pred_nodes) != 0:
+        pre = len(true_nodes & pred_nodes) / float(len(pred_nodes))
+    if len(true_nodes) != 0:
+        rec = len(true_nodes & pred_nodes) / float(len(true_nodes))
+    if (pre + rec) > 0.:
+        fm = (2. * pre * rec) / (pre + rec)
+    return [pre, rec, fm]
 
 """
 rank nodes
@@ -93,16 +108,16 @@ def ranknodes(nodes,k,A):
 """
 
 """
-def get_fun(X,Y,W,n,p,lambda0=0):
+def get_fun(X,Y,W,A,n,p,lambda0=0): #(x,y,W,A,lambda0)
     x=np.zeros(n)
     y=np.zeros(p)
-
+    print n,p,len(x)
     for i in X:
-        x[i]=1.0
+        x[int(i)]=1.0
     for i in Y:
-        y[i]=1.0
-
-    return PCA_getFuncValue(x,y,W,None,lambda0)#A,W,lambda0
+        y[int(i)]=1.0
+    fval=PCA_getFuncValue(x,y,W,A,lambda0)
+    return fval#x,y,W,A,lambda0
 
 """
 Input : A: adjacency matrix
@@ -146,7 +161,7 @@ def calcualte_initial_val(W,A,n,p,k,s):
                 S.append(indexes[i])
             if len(S)>0:
                 rank=ranknodes(S,k,A)
-                fval=get_fun(rank,[j],0)
+                fval=get_fun(rank,[j],W,A,n,p,0) #X,Y,W,A,n,p,lambda0=0
                 scores[ii][j]=fval*-1
                 res[ii].append(rank)
             else:
@@ -165,7 +180,7 @@ def calcualte_initial_val(W,A,n,p,k,s):
                 Y1.append(indexes[i])
 
         X1=res[ii][indexes[0]]
-        fval1=get_fun(X1,Y1,0)
+        fval1=get_fun(X1,Y1,W,n,p,0)
         if fval==-1 or fval>fval1:
             Y=[]
             for i in Y1:
@@ -179,7 +194,7 @@ def calcualte_initial_val(W,A,n,p,k,s):
             X1=res[ii][indexes[j]]
             Y1=[]
             Y1.append(indexes[j])
-            fval1=get_fun(X1,Y1,0.0)
+            fval1=get_fun(X1,Y1,W,n,p,0)
 
             if fval == -1 or fval > fval1:
                 Y = []

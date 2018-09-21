@@ -259,8 +259,8 @@ def varying_ClusterSize():
             cPickle.dump(data, bz2_f)
 
 
-# varying_attributes()
-# varying_NumClusters()
+varying_attributes()
+varying_NumClusters()
 varying_ClusterSize()
 root="/home/apdm05/workspace/data/sg-pursuit/DenseSubgraph_APDM/VaryingNumOfAttributes/"
 nodes, adjList, data, true_subgraph, trueFea=read_APDM_data(root+"VaryingNumOfAttributes_APDM_Dense_subgraph_in_0.35_out_0.1_numClusters_10_TrueSGSize_30_FeasNum_20_trueFeasNum_10_sigmas1_0.0316_case_0.txt")

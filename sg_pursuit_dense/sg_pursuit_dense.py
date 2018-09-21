@@ -18,11 +18,11 @@ output:
 """
 
 
-def SG_Pursuit_Dense(edges, edgeCost, k, s, W,A,lambda0, maxIter=5, g=1.0, B=3.):
+def sg_pursuit_dense(edges, edgeCost, k, s, W,A,lambda0, maxIter=5, g=1.0, B=3.):
     start_time = time.time()
     num_nodes = len(W)
     num_feats = len(W[0])
-
+    print("num_nodes:%d num_feat:%d"%(num_nodes,num_feats))
     # initialize values x0,y0
     xi = np.zeros(num_nodes)
     yi = np.zeros(num_feats)
@@ -79,4 +79,4 @@ def SG_Pursuit_Dense(edges, edgeCost, k, s, W,A,lambda0, maxIter=5, g=1.0, B=3.)
 
     running_time = time.time() - start_time
 
-    return xi, yi, func_value, running_time
+    return xi, yi

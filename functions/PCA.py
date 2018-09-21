@@ -10,6 +10,8 @@ PCA score : \sigma_{1..n} (w_iy - xWy/1^Tx)^2 - lambda*xAx/1^Tx
     input: x,y,W numpy arrays
     output: float value
 """
+
+
 def PCA_getFuncValue(x,y,W,A,lambda0):
     funcValue=0.0
     if len(x)!=len(W) or len(y)!=len(W[0]):
