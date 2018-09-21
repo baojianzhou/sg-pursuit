@@ -2,8 +2,9 @@ import cPickle,bz2
 from sparse_learning.proj_algo import head_proj
 from sparse_learning.proj_algo import tail_proj
 import numpy as np
-import time
+import time,datetime
 import copy
+import multiprocessing
 # from sg_pursuit_dense import *
 # from utils.base_function import *
 
@@ -486,7 +487,7 @@ output:
 """
 
 
-def sg_pursuit_dense(edges, edgeCost, k, s, W,A,lambda0, maxIter=5, g=1.0, B=3.):
+def sg_pursuit_dense(edges, edgeCost, k, s, W,A,lambda0, maxIter, g):
     start_time = time.time()
     num_nodes = len(W)
     num_feats = len(W[0])
@@ -507,8 +508,8 @@ def sg_pursuit_dense(edges, edgeCost, k, s, W,A,lambda0, maxIter=5, g=1.0, B=3.)
         gradientFx = normalized_Gradient(xi, gradientFx)
         gradientFy = normalized_Gradient(yi, gradientFy)
         """Algorithm 1: line 6 """
-        (result_nodes, result_edges, p_x) = head_proj(edges=edges, weights=edgeCost, x=gradientFx, g=g, s=k, budget=B,
-                                                      delta=1. / 169., err_tol=1e-6, max_iter=30, root=-1,
+        (result_nodes, result_edges, p_x) = head_proj(edges=edges, weights=edgeCost, x=gradientFx, g=g, s=k, budget=k-1.,
+                                                      delta=1. / 169., err_tol=1e-6, max_iter=50, root=-1,
                                                       pruning='strong', epsilon=1e-6, verbose=0)
         gammaX = set(result_nodes)
 
@@ -521,8 +522,9 @@ def sg_pursuit_dense(edges, edgeCost, k, s, W,A,lambda0, maxIter=5, g=1.0, B=3.)
         """line 10"""
         (bx, by) = PCA_multiGradientDecent4PCAScore(xi, yi, omegaX, omegaY, W,A,lambda0, maxIter=1000, stepSize=0.01)
         """line 11"""
-        (result_nodes, result_edges, p_x) = tail_proj(edges=edges, weights=edgeCost, x=bx, g=g, s=k, root=-1,
-                                                      max_iter=20, budget=3., nu=2.5)
+        (result_nodes, result_edges, p_x) = tail_proj(edges=edges, weights=edgeCost, x=bx, g=1, s=k, budget=k - 1., nu=2.5,
+            max_iter=50, err_tol=1e-6, root=-1, pruning='strong', verbose=0,
+            epsilon=1e-6)
         psiX = set(result_nodes)
         """line 12"""
         psiY = identifyDirection(by, s)
@@ -556,6 +558,50 @@ Experiment codes
 *************************************************************************************************"""
 
 
+"""
+Multi-procesing 
+"""
+class Consumer(multiprocessing.Process):
+    def __init__(self, task_queue, result_queue):
+        multiprocessing.Process.__init__(self)
+        self.task_queue = task_queue
+        self.result_queue = result_queue
+
+    def run(self):
+        proc_name = self.name
+        while True:
+            next_task = self.task_queue.get()
+            if next_task is None:
+                # Poison pill means we should exit
+                # print '%s: Exiting' % proc_name
+                break
+            # print '%s: %s' % (proc_name, next_task)
+            answer = next_task()
+            self.result_queue.put(answer)
+        return
+
+class task_sg_pursuit(object):
+    def __init__(self, edges, edgeCost, k, s, W,A,lambda0, maxIter, g):
+        self.edges = edges
+        self.edgeCost=edgeCost
+        self.k=k
+        self.s = s
+        self.W = W
+        self.A = A
+        self.lambda0 = lambda0
+        self.maxIter = maxIter
+        self.g = g
+
+    def __call__(self):
+        # this is the place to do your work
+        # time.sleep(0.1) # pretend to take some time to do our work
+        #admm(omega, b, X_b, y_t, Y, X, edge_up_nns,edge_down_nns, omega_0, R, dict_paths, psl, approx, report_stat)
+        xi, yi, running_time = sg_pursuit_dense(self.edges, self.edgeCost, self.k, self.s, self.W,self.A,self.lambda0, self.maxIter, self.g)
+        return xi, yi, running_time
+
+    def __str__(self):
+        return '%s' % (self.p0)
+
 
 
 def adj_matrix(edges,n):
@@ -563,28 +609,54 @@ def adj_matrix(edges,n):
     for (e1,e2) in edges:
         A[e1][e2]=1.0
         A[e2][e1] = 1.0
+
     return A
 
 def test_varying_num_attr():
     data_folder="../input/dense_supgraph/simu_fig4/"
+    with open("../output/result-VaryingAtt.txt", "a+") as op:
+        op.write("\n\n###  "+str(datetime.datetime.now())+"  ###\n")
     for num_feat in [20,40,80,100][:]:
         node_prf=[[],[],[]]
         feat_prf=[[],[],[]]
         running_times=[]
         filename="VaryingAttribute_numAtt_%d.pkl"%(num_feat)
         datas = cPickle.load(bz2.BZ2File(data_folder + filename))
+        num_jobs = 0
+        tasks = multiprocessing.Queue()
+        results = multiprocessing.Queue()
+        # Start consumers
+        num_consumers = 15  # number of cores.
+        print iter, 'Creating %d consumers' % num_consumers
+        consumers = [Consumer(tasks, results)
+                     for i in range(num_consumers)]
+        for w in consumers:
+            w.start()
+
         for case,data in datas.items()[:]:
             k=len(data["true_sub_graph"])/2
             s=len(data["true_sub_feature"])
             lambda0=5.0
             A=adj_matrix(data["edges"],data["n"])
-            xi,yi,running_time=sg_pursuit_dense(data["edges"], data["costs"], k, s,data["data_matrix"] ,A, lambda0, maxIter=5, g=1, B=k-1.0)
+
+
+
+            #edges, edgeCost, k, s, W,A,lambda0, maxIter=5, g=1.0, B=3.
+            # xi,yi,running_time=sg_pursuit_dense(data["edges"], data["costs"], k, s,data["data_matrix"] ,A, lambda0, maxIter=5, g=1)
+            tasks.put(task_sg_pursuit(data["edges"], data["costs"], k, s,data["data_matrix"] ,A, lambda0, maxIter=5, g=1))
+            num_jobs +=1.0
+
+        for i in range(num_consumers):
+            tasks.put(None)
+        while num_jobs:
+            xi,yi,running_time = results.get()
             n_pre_rec_fm = node_pre_rec_fm(
                 true_nodes=data['true_sub_graph'],
                 pred_nodes=np.nonzero(xi)[0])
             f_pre_rec_fm = node_pre_rec_fm(
                 true_nodes=data['true_sub_feature'],
                 pred_nodes=np.nonzero(yi)[0])
+            print num_jobs, ">>", n_pre_rec_fm, f_pre_rec_fm, running_times
             node_prf[0].append(n_pre_rec_fm[0])
             node_prf[1].append(n_pre_rec_fm[1])
             node_prf[2].append(n_pre_rec_fm[2])
@@ -594,32 +666,60 @@ def test_varying_num_attr():
             feat_prf[2].append(f_pre_rec_fm[2])
 
             running_times.append(running_time)
+            num_jobs-=1.0
 
-        print("VaryingAtt: num_attirbute:%d avg_node_fm:%f   avg_feat_fm%f avg_runtime:%f"%(num_feat,np.mean(node_prf[2]),np.mean(feat_prf),np.mean(running_times)))
-        with open("result.txt","w") as op:
-            op.write("VaryingAtt: num_attirbute:%d avg_node_fm:%f   avg_feat_fm%f avg_runtime:%f+\n"%(num_feat,np.mean(node_prf[2]),np.mean(feat_prf),np.mean(running_times)))
+
+
+
+        print("VaryingAtt: %f %f %f %f\n"%(num_feat,np.mean(node_prf[2]),np.mean(feat_prf[2]),round(np.mean(running_times),2)))
+        with open("../output/result-VaryingAtt.txt","w") as op:
+            op.write("VaryingAtt: %f %f %f %f\n"%(num_feat,np.mean(node_prf[2]),np.mean(feat_prf[2]),round(np.mean(running_times),2)))
 
 def test_varying_num_cluster():
     data_folder="../input/dense_supgraph/simu_fig4/"
+    with open("../output/result-VaryingNumCluster.txt", "a+") as op:
+        op.write("\n\n###  "+str(datetime.datetime.now())+"  ###\n")
     for num_cluster in [10,12,14,15,20,25][:]:
         node_prf=[[],[],[]]
         feat_prf=[[],[],[]]
         running_times=[]
         filename="VaryingNumClusters_numCluster_%d.pkl"%(num_cluster)
         datas = cPickle.load(bz2.BZ2File(data_folder + filename))
-        for case,data in datas.items()[:]:
-            print(filename,case)
-            k=len(data["true_sub_graph"])/2
-            s=len(data["true_sub_feature"])
-            lambda0=5.0
-            A=adj_matrix(data["edges"],data["n"])
-            xi,yi,running_time=sg_pursuit_dense(data["edges"], data["costs"], k, s,data["data_matrix"] ,A, lambda0, maxIter=5, g=1, B=k-1.0)
+        num_jobs = 0
+        tasks = multiprocessing.Queue()
+        results = multiprocessing.Queue()
+        # Start consumers
+        num_consumers = 15  # number of cores.
+        print iter, 'Creating %d consumers' % num_consumers
+        consumers = [Consumer(tasks, results)
+                     for i in range(num_consumers)]
+        for w in consumers:
+            w.start()
+        for case, data in datas.items()[:]:
+            k = len(data["true_sub_graph"]) / 2
+            s = len(data["true_sub_feature"])
+            lambda0 = 5.0
+            A = adj_matrix(data["edges"], data["n"])
+
+
+
+            # edges, edgeCost, k, s, W,A,lambda0, maxIter=5, g=1.0, B=3.
+            # xi,yi,running_time=sg_pursuit_dense(data["edges"], data["costs"], k, s,data["data_matrix"] ,A, lambda0, maxIter=5, g=1)
+            tasks.put(
+                task_sg_pursuit(data["edges"], data["costs"], k, s, data["data_matrix"], A, lambda0, maxIter=5, g=1))
+            num_jobs += 1.0
+
+        for i in range(num_consumers):
+            tasks.put(None)
+        while num_jobs:
+            xi, yi, running_time = results.get()
             n_pre_rec_fm = node_pre_rec_fm(
                 true_nodes=data['true_sub_graph'],
                 pred_nodes=np.nonzero(xi)[0])
             f_pre_rec_fm = node_pre_rec_fm(
                 true_nodes=data['true_sub_feature'],
                 pred_nodes=np.nonzero(yi)[0])
+            print num_jobs, ">>", n_pre_rec_fm, f_pre_rec_fm, running_times
             node_prf[0].append(n_pre_rec_fm[0])
             node_prf[1].append(n_pre_rec_fm[1])
             node_prf[2].append(n_pre_rec_fm[2])
@@ -629,18 +729,31 @@ def test_varying_num_cluster():
             feat_prf[2].append(f_pre_rec_fm[2])
 
             running_times.append(running_time)
+            num_jobs -= 1.0
 
-        print("VaryingAtt: num_attirbute:%d avg_node_fm:%f   avg_feat_fm%f avg_runtime:%f"%(num_cluster,np.mean(node_prf[2]),np.mean(feat_prf),np.mean(running_times)))
-        with open("result-numcluster.txt","w") as op:
-            op.write("VaryingAtt: num_attirbute:%d avg_node_fm:%f   avg_feat_fm%f avg_runtime:%f\n"%(num_cluster,np.mean(node_prf[2]),np.mean(feat_prf),np.mean(running_times)))
+        print("VaryingAtt: num_attirbute:%d avg_node_fm:%f   avg_feat_fm%f avg_runtime:%f"%(num_cluster,np.mean(node_prf[2]),np.mean(feat_prf[2]),round(np.mean(running_times),2)))
+        with open("../output/result-VaryingNumCluster.txt","a+") as op:
+            op.write("VaryingNumCluster %f %f %f %f\n"%(num_cluster,np.mean(node_prf[2]),np.mean(feat_prf[2]),round(np.mean(running_times),2)))
 
 
 def test_varying_cluster_size():
     data_folder="../input/dense_supgraph/simu_fig4/"
+    with open("../output/result-VaryingClusterSize.txt", "a+") as op:
+        op.write("\n\n###  "+str(datetime.datetime.now())+"  ###\n")
     for cluster_sizes in [(30,100),(30,150),(30,200),(30,300),(30,400)][:]:
         node_prf=[[],[],[]]
         feat_prf=[[],[],[]]
         running_times=[]
+        num_jobs = 0
+        tasks = multiprocessing.Queue()
+        results = multiprocessing.Queue()
+        # Start consumers
+        num_consumers = 15  # number of cores.
+        print iter, 'Creating %d consumers' % num_consumers
+        consumers = [Consumer(tasks, results)
+                     for i in range(num_consumers)]
+        for w in consumers:
+            w.start()
         for case in range(50)[:]:
             filename="VaryingClusterSizes_numCluster_%d_%d_case-%d.pkl"%(cluster_sizes[0],cluster_sizes[1],case)
             try:
@@ -648,21 +761,31 @@ def test_varying_cluster_size():
             except:
                 print("File not exist..")
                 continue
+            k = len(data["true_sub_graph"]) / 2
+            s = len(data["true_sub_feature"])
+            lambda0 = 5.0
+            A = adj_matrix(data["edges"], data["n"])
 
-            print(filename)
-            # print data["true_sub_graph"]
-            k=len(data["true_sub_graph"])/2
-            s=len(data["true_sub_feature"])
-            lambda0=5.0
-            A=adj_matrix(data["edges"],data["n"])
-            xi,yi,running_time=sg_pursuit_dense(data["edges"], data["costs"], k, s,data["data_matrix"] ,A, lambda0, maxIter=5, g=1, B=k-1.0)
+
+
+            # edges, edgeCost, k, s, W,A,lambda0, maxIter=5, g=1.0, B=3.
+            # xi,yi,running_time=sg_pursuit_dense(data["edges"], data["costs"], k, s,data["data_matrix"] ,A, lambda0, maxIter=5, g=1)
+            tasks.put(
+                task_sg_pursuit(data["edges"], data["costs"], k, s, data["data_matrix"], A, lambda0, maxIter=5,
+                                g=1))
+            num_jobs += 1.0
+
+        for i in range(num_consumers):
+            tasks.put(None)
+        while num_jobs:
+            xi, yi, running_time = results.get()
             n_pre_rec_fm = node_pre_rec_fm(
                 true_nodes=data['true_sub_graph'],
                 pred_nodes=np.nonzero(xi)[0])
             f_pre_rec_fm = node_pre_rec_fm(
                 true_nodes=data['true_sub_feature'],
                 pred_nodes=np.nonzero(yi)[0])
-            print ">>",n_pre_rec_fm,f_pre_rec_fm,running_times
+            print num_jobs, ">>", n_pre_rec_fm, f_pre_rec_fm, running_times
             node_prf[0].append(n_pre_rec_fm[0])
             node_prf[1].append(n_pre_rec_fm[1])
             node_prf[2].append(n_pre_rec_fm[2])
@@ -672,10 +795,11 @@ def test_varying_cluster_size():
             feat_prf[2].append(f_pre_rec_fm[2])
 
             running_times.append(running_time)
+            num_jobs -= 1.0
 
         print("VaryingClusterSize: cluster size:%d - %d avg_node_fm:%f   avg_feat_fm%f avg_runtime:%f"%(cluster_sizes[0],cluster_sizes[0],np.mean(node_prf[2]),np.mean(feat_prf),np.mean(running_times)))
-        with open("result-clustersize.txt","w") as op:
-            op.write("VaryingClusterSize: cluster size:%d - %d avg_node_fm:%f   avg_feat_fm%f avg_runtime:%f\n"%(cluster_sizes[0],cluster_sizes[0],np.mean(node_prf[2]),np.mean(feat_prf),np.mean(running_times)))
+        with open("../output/result-VaryingClusterSize.txt","w") as op:
+            op.write("VaryingClusterSize %d_%d %f %f %f\n"%(cluster_sizes[0],cluster_sizes[0],np.mean(node_prf[2]),np.mean(feat_prf),round(np.mean(running_times),2)))
 
 
 
@@ -683,9 +807,9 @@ def test_varying_cluster_size():
 
 
 def main():
-    # test_varying_num_attr()
-    # test_varying_num_cluster()
-    test_varying_cluster_size()
+    test_varying_num_attr()
+    # # test_varying_num_cluster()
+    # test_varying_cluster_size()
 
 
 

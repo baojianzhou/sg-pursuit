@@ -1,1 +1,0 @@
-VaryingClusterSize: cluster size:30 - 30 avg_node_fm:0.010685   avg_feat_fm0.276113 avg_runtime:331.154009
