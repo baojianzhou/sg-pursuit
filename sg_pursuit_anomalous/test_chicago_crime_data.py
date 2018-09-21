@@ -1,17 +1,37 @@
 # -*- coding: utf-8 -*-
 import bz2
+import sys
+import time
 import cPickle
 import numpy as np
+import multiprocessing
 from itertools import product
 from sparse_learning.proj_algo import head_proj
 from sparse_learning.proj_algo import tail_proj
+from sparse_learning.data_process import
 
 root_path = '/network/rit/lab/ceashpc/bz383376/data/icdm17/CrimesOfChicago/'
 
 
+def node_pre_rec_fm(true_nodes, pred_nodes):
+    """ Return the precision, recall and f-measure.
+    :param true_nodes:
+    :param pred_nodes:
+    :return: precision, recall and f-measure """
+    true_nodes, pred_nodes = set(true_nodes), set(pred_nodes)
+    pre, rec, fm = 0.0, 0.0, 0.0
+    if len(pred_nodes) != 0:
+        pre = len(true_nodes & pred_nodes) / float(len(pred_nodes))
+    if len(true_nodes) != 0:
+        rec = len(true_nodes & pred_nodes) / float(len(true_nodes))
+    if (pre + rec) > 0.:
+        fm = (2. * pre * rec) / (pre + rec)
+    return [pre, rec, fm]
+
+
 # elevated mean scan statistic
 class FuncEMS(object):
-    def __init__(self, data_matrix, lambda_):
+    def __init__(self, data_matrix=None, lambda_=10.):
         self.data_matrix = data_matrix
         n, p = data_matrix.shape
         self.n = n
@@ -198,10 +218,10 @@ def identify_direction(grad, s):
 
 
 def sg_pursuit_algo(para):
-    k, s, data_matrix, edges, costs, max_iter, lambda_ = para
+    k, s, data_matrix, edges, costs, max_iter = para
     g, t = 1, 5
     budget = k - g + 0.0
-    func = FuncEMS(data_matrix=data_matrix, lambda_=lambda_)
+    func = FuncEMS(data_matrix=data_matrix)
     xt, yt = func.get_initial_point(k, s)
     while True:
         func_val, grad_x, grad_y = func.get_loss_grad(xt, yt)
@@ -229,32 +249,41 @@ def sg_pursuit_algo(para):
     return xt, yt
 
 
+def run_single_process(para):
+    event_type, test_case = para
+    file_name = 'chicago_%s_case_%d.pkl' % (event_type, test_case)
+    chicago_data = cPickle.load(bz2.BZ2File(root_path + file_name))
+    lambda_, max_iter = 10., 5
+    true_x = np.zeros(chicago_data['n'])
+    true_y = np.zeros(chicago_data['p'])
+    true_x[chicago_data['true_sub_graph']] = 1.
+    true_y[chicago_data['true_sub_feature']] = 1.
+    func = FuncEMS(chicago_data['data_matrix'])
+    true_val = func.get_fun_val(true_x, true_y)
+    print('true value: %.4f' % true_val)
+    para = (len(chicago_data['true_sub_graph']) / 2,
+            len(chicago_data['true_sub_feature']),
+            chicago_data['data_matrix'],
+            chicago_data['edges'],
+            chicago_data['costs'], max_iter)
+    xt, yt = sg_pursuit_algo(para)
+    n_pre_rec_fm = node_pre_rec_fm(
+        true_nodes=chicago_data['true_sub_graph'],
+        pred_nodes=np.nonzero(xt)[0])
+    f_pre_rec_fm = node_pre_rec_fm(
+        true_nodes=chicago_data['true_sub_feature'],
+        pred_nodes=np.nonzero(yt)[0])
+    return n_pre_rec_fm, f_pre_rec_fm
+
+
 def main():
-    for test_case in range(52):
-        for event_type in ['BATTERY', 'BURGLARY']:
-            file_name = root_path + 'chicago_%s_case_%d.pkl' % \
-                        (event_type, test_case)
-            chicago_data = cPickle.load(bz2.BZ2File(file_name))
-            lambda_, max_iter = 10., 5
-            import networkx as nx
-            G = nx.Graph()
-            for edge in chicago_data['edges']:
-                G.add_edge(edge[0], edge[1])
-            print(len(nx.connected_components(G)))
-            true_x = np.zeros(chicago_data['n'])
-            true_y = np.zeros(chicago_data['p'])
-            true_x[chicago_data['true_sub_graph']] = 1.
-            true_y[chicago_data['true_sub_feature']] = 1.
-            func = FuncEMS(chicago_data['data_matrix'], lambda_)
-            true_val = func.get_fun_val(true_x, true_y)
-            print('true value: %.4f' % true_val)
-            para = (len(chicago_data['true_sub_graph']) / 2,
-                    len(chicago_data['true_sub_feature']),
-                    chicago_data['data_matrix'],
-                    chicago_data['edges'],
-                    chicago_data['costs'], max_iter, lambda_)
-            sg_pursuit_algo(para)
-            pass
+    num_cpu = sys.argv[1]
+    input_paras = [_ for _ in product(['BATTERY', 'BURGLARY'], range(52))]
+    pool = multiprocessing.Pool(processes=num_cpu)
+    results_pool = pool.map(run_single_process, input_paras)
+    pool.close()
+    pool.join()
+    cPickle.dump(results_pool,root_path+'')
 
 
 if __name__ == '__main__':
