@@ -53,8 +53,7 @@ class FuncEMS(object):
     def get_initial_point(self, k, s):
         x0, y0 = np.zeros(self.n), np.zeros(self.p)
         x, y = [], []
-        result_indices = []
-        result_scores = np.zeros(self.p)
+        result_indices, result_scores = [], np.zeros(self.p)
         for j in range(self.p):
             # descending order
             sorted_indices = np.argsort(self.data_matrix.T[j])[-k:]
@@ -64,7 +63,7 @@ class FuncEMS(object):
             result_scores[j] = -func_val
             result_indices.append(sorted_indices)
         func_val = -1.
-        indices = np.argsort(result_scores)[-s:]
+        indices = np.argsort(result_scores)[::-1]
         for j in range(s):
             x1, y1 = np.zeros(self.n), np.zeros(self.p)
             y1[[indices[_] for _ in range(j + 1)]] = 1.
@@ -80,7 +79,7 @@ class FuncEMS(object):
             func_val1 = self.get_fun_val(x1, y1)
             if func_val1 == -1 or func_val > func_val1:
                 y = [indices[j]]
-                x = [_ for _ in result_indices[indices[j]]]
+                x = result_indices[indices[j]]
                 func_val = func_val1
         x0[x], y0[y] = 1., 1.
         return x0, y0
@@ -104,18 +103,17 @@ class FuncEMS(object):
 
     def get_loss_grad(self, x, y):
         sum_x, sum_y = np.sum(x), np.sum(y)
+        if sum_x == 0.0 or sum_y == 0.0:
+            print('gradient_x: input x vector values are all zeros !!!')
+            exit(0)
         w_y = np.dot(self.data_matrix, y)
         xt_w_y = np.dot(x, w_y)
         reg = .5 * (self.lambda_ * (sum_y ** 2.))
         func_val = - xt_w_y / np.sqrt(sum_x) + reg
-        if sum_x == 0.0 or sum_y == 0.0:
-            print('GradientX:Input x vector values are all Zeros !!!')
-            exit(0)
-        term1 = (1. / np.sqrt(sum_x)) * w_y
         term2 = .5 * xt_w_y / (np.sqrt(sum_x) * sum_x)
-        grad_x = -term1 + term2
+        grad_x = -(1. / np.sqrt(sum_x)) * w_y + term2
         x_w = np.dot(self.data_matrix.T, x)
-        grad_y = 1. / np.sqrt(sum_x) * x_w + self.lambda_ * y
+        grad_y = -1. / np.sqrt(sum_x) * x_w + self.lambda_ * y
         if np.isnan(grad_x).any() or np.isnan(grad_y).any():
             print('something is wrong. gradient x or y')
         return func_val, grad_x, grad_y
@@ -215,9 +213,14 @@ def identify_direction(grad, s):
 
 
 def sg_pursuit_algo(para):
-    k, s, data_matrix, edges, costs, max_iter = para
+    k, s, data_matrix, edges, costs, max_iter, true_nodes, true_features = para
     func = FuncEMS(data_matrix=data_matrix)
     xt, yt = func.get_initial_point(k, s)
+    print(np.nonzero(xt)[0])
+    print(np.nonzero(yt)[0])
+    print(np.linalg.norm(xt), np.linalg.norm(yt))
+    print(node_pre_rec_fm(true_nodes=true_nodes, pred_nodes=np.nonzero(xt)[0]))
+    print(node_pre_rec_fm(true_nodes=true_features, pred_nodes=np.nonzero(yt)[0]))
     run_time_head_tail = 0.0
     for tt in range(max_iter):
         iter_time = time.time()
@@ -271,7 +274,9 @@ def run_single_process(para):
             len(chicago_data['true_sub_feature']),
             chicago_data['data_matrix'],
             chicago_data['edges'],
-            chicago_data['costs'], 5)
+            chicago_data['costs'], 5,
+            chicago_data['true_sub_graph'],
+            chicago_data['true_sub_feature'])
     xt, yt = sg_pursuit_algo(para)
     n_pre_rec_fm = node_pre_rec_fm(
         true_nodes=chicago_data['true_sub_graph'],
@@ -288,6 +293,7 @@ def main():
     num_cpu = int(sys.argv[1])
     input_paras = [_ for _ in product(['BATTERY', 'BURGLARY'], range(52))]
     pool = multiprocessing.Pool(processes=num_cpu)
+    run_single_process(('BATTERY', 33))
     results_pool = pool.map(run_single_process, input_paras)
     pool.close()
     pool.join()
