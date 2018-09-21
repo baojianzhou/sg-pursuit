@@ -2,6 +2,7 @@
 import os
 import bz2
 import sys
+import time
 import cPickle
 import numpy as np
 import multiprocessing
@@ -121,9 +122,7 @@ class FuncEMS(object):
 
     @staticmethod
     def update_minimizer(grad_x, indicator_x, x, bound, step_size):
-        normalized_x = np.zeros_like(grad_x)
-        for j in range(len(x)):
-            normalized_x[j] = (x[j] - step_size * grad_x[j]) * indicator_x[j]
+        normalized_x = (x - step_size * grad_x) * indicator_x
         sorted_indices = np.argsort(normalized_x)
         num_non_posi = 0
         for j in range(len(x)):
@@ -223,26 +222,32 @@ def sg_pursuit_algo(para):
     k, s, data_matrix, edges, costs, max_iter = para
     func = FuncEMS(data_matrix=data_matrix)
     xt, yt = func.get_initial_point(k, s)
+    run_time_head_tail = 0.0
     for tt in range(max_iter):
+        iter_time = time.time()
         print(tt)
         func_val, grad_x, grad_y = func.get_loss_grad(xt, yt)
         grad_x = normalize_gradient(xt, grad_x)
         grad_y = normalize_gradient(yt, grad_y)
+        start_time = time.time()
         re_head = head_proj(
             edges=edges, weights=costs, x=grad_x, g=1, s=k, budget=k - 1.,
             delta=1. / 169., max_iter=50, err_tol=1e-6, root=-1,
             pruning='strong', epsilon=1e-6, verbose=0)
         re_nodes, re_edges, p_x = re_head
+        run_time_head_tail += time.time() - start_time
         gamma_x, gamma_y = set(re_nodes), identify_direction(grad_y, 2 * s)
         supp_x = set([ind for ind, _ in enumerate(xt) if _ != 0.0])
         supp_y = set([ind for ind, _ in enumerate(yt) if _ != 0.0])
         omega_x, omega_y = gamma_x.union(supp_x), gamma_y.union(supp_y)
         bx, by = func.get_argmin_f_xy(xt, yt, omega_x, omega_y)
+        start_time = time.time()
         re_tail = tail_proj(
             edges=edges, weights=costs, x=bx, g=1, s=k, budget=k - 1., nu=2.5,
             max_iter=50, err_tol=1e-6, root=-1, pruning='strong', verbose=0,
             epsilon=1e-6)
         re_nodes, re_edges, p_x = re_tail
+        run_time_head_tail += time.time() - start_time
         psi_x, psi_y = re_nodes, identify_direction(by, s)
         x_pre, y_pre = xt, yt
         xt, yt = np.zeros_like(xt), np.zeros_like(yt)
@@ -250,6 +255,8 @@ def sg_pursuit_algo(para):
         gap_x, gap_y = np.linalg.norm(xt - x_pre), np.linalg.norm(yt - y_pre)
         if gap_x < 1e-3 and gap_y < 1e-3:
             break
+        print('iteration time: %.4f, head_tail time: %.4f' %
+              (time.time() - iter_time, run_time_head_tail))
     return xt, yt
 
 
@@ -284,12 +291,16 @@ def run_single_process(para):
 def main():
     num_cpu = int(sys.argv[1])
     input_paras = [_ for _ in product(['BATTERY', 'BURGLARY'], range(52))]
-    run_single_process(input_paras[0])
     pool = multiprocessing.Pool(processes=num_cpu)
     results_pool = pool.map(run_single_process, input_paras)
     pool.close()
     pool.join()
     cPickle.dump(results_pool, open('output/output_chicago.pkl', 'wb'))
+    for result in results_pool:
+        pre, rec, fm = result[0]
+        print('node_pre_rec_fm: %.4f %.4f %.4f' % (pre, rec, fm))
+        pre, rec, fm = result[1]
+        print('feature_pre_rec_fm: %.4f %.4f %.4f' % (pre, rec, fm))
 
 
 if __name__ == '__main__':
