@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import os
 import bz2
 import sys
 import time
@@ -9,10 +8,6 @@ import multiprocessing
 from itertools import product
 from sparse_learning.proj_algo import head_proj
 from sparse_learning.proj_algo import tail_proj
-
-os.environ["MKL_NUM_THREADS"] = "1"
-os.environ["NUMEXPR_NUM_THREADS"] = "1"
-os.environ["OMP_NUM_THREADS"] = "1"
 
 root_path = '../input/data_chicago/'
 
@@ -53,8 +48,7 @@ class FuncEMS(object):
     def get_initial_point(self, k, s):
         x0, y0 = np.zeros(self.n), np.zeros(self.p)
         x, y = [], []
-        result_indices = []
-        result_scores = np.zeros(self.p)
+        result_indices, result_scores = [], np.zeros(self.p)
         for j in range(self.p):
             # descending order
             sorted_indices = np.argsort(self.data_matrix.T[j])[-k:]
@@ -64,7 +58,7 @@ class FuncEMS(object):
             result_scores[j] = -func_val
             result_indices.append(sorted_indices)
         func_val = -1.
-        indices = np.argsort(result_scores)[-s:]
+        indices = np.argsort(result_scores)[::-1]
         for j in range(s):
             x1, y1 = np.zeros(self.n), np.zeros(self.p)
             y1[[indices[_] for _ in range(j + 1)]] = 1.
@@ -80,7 +74,7 @@ class FuncEMS(object):
             func_val1 = self.get_fun_val(x1, y1)
             if func_val1 == -1 or func_val > func_val1:
                 y = [indices[j]]
-                x = [_ for _ in result_indices[indices[j]]]
+                x = result_indices[indices[j]]
                 func_val = func_val1
         x0[x], y0[y] = 1., 1.
         return x0, y0
@@ -104,18 +98,17 @@ class FuncEMS(object):
 
     def get_loss_grad(self, x, y):
         sum_x, sum_y = np.sum(x), np.sum(y)
+        if sum_x == 0.0 or sum_y == 0.0:
+            print('gradient_x: input x vector values are all zeros !!!')
+            exit(0)
         w_y = np.dot(self.data_matrix, y)
         xt_w_y = np.dot(x, w_y)
         reg = .5 * (self.lambda_ * (sum_y ** 2.))
         func_val = - xt_w_y / np.sqrt(sum_x) + reg
-        if sum_x == 0.0 or sum_y == 0.0:
-            print('GradientX:Input x vector values are all Zeros !!!')
-            exit(0)
-        term1 = (1. / np.sqrt(sum_x)) * w_y
         term2 = .5 * xt_w_y / (np.sqrt(sum_x) * sum_x)
-        grad_x = -term1 + term2
+        grad_x = -(1. / np.sqrt(sum_x)) * w_y + term2
         x_w = np.dot(self.data_matrix.T, x)
-        grad_y = 1. / np.sqrt(sum_x) * x_w + self.lambda_ * y
+        grad_y = -1. / np.sqrt(sum_x) * x_w + self.lambda_ * y
         if np.isnan(grad_x).any() or np.isnan(grad_y).any():
             print('something is wrong. gradient x or y')
         return func_val, grad_x, grad_y
@@ -124,74 +117,15 @@ class FuncEMS(object):
     def update_minimizer(grad_x, indicator_x, x, bound, step_size):
         normalized_x = (x - step_size * grad_x) * indicator_x
         sorted_indices = np.argsort(normalized_x)
-        num_non_posi = 0
-        for j in range(len(x)):
-            if normalized_x[j] <= 0.0:
-                num_non_posi += 1
-                normalized_x[j] = 0.
-            elif normalized_x[j] > 1.:
-                normalized_x[j] = 1.
+        num_non_posi = len(np.where(normalized_x <= 0.0))
+        normalized_x[normalized_x <= 0.0] = 0.
+        normalized_x[normalized_x > 1.] = 1.
         if num_non_posi == len(x):
             print('siga-1 is too large and all values'
                   ' in the gradient are non-positive.')
             for i in range(bound):
                 normalized_x[sorted_indices[i]] = 1.
         return normalized_x
-
-
-def data_convert():
-    for test_case, event_type in product(range(52), ['BATTERY', 'BURGLARY']):
-        data = {'n': 0,
-                'p': 0,
-                'test_case': test_case,
-                'data_matrix': [],
-                'edges': [],
-                'costs': [],
-                'event_type': event_type,
-                'true_sub_graph': [],
-                'true_sub_feature': [],
-                'true_x': None,
-                'true_y': None}
-        print(event_type, test_case)
-        with open(root_path + 'graph/processed_%s_test_case_%d.txt'
-                  % (event_type, test_case)) as f:
-            n, m, p = 0, 0, 0
-            for ind, each_line in enumerate(f.readlines()):
-                each_line = each_line.lstrip().rstrip()
-                if ind == 0:
-                    data['n'] = int(each_line.split(' ')[0])
-                    data['p'] = int(each_line.split(' ')[1])
-                    n, p = data['n'], data['p']
-                elif 1 <= ind <= n:
-                    arr = [float(_) for _ in each_line.split(' ')]
-                    data['data_matrix'].append(arr)
-                elif ind == n + 1:
-                    data['m'] = int(each_line)
-                    m = int(each_line)
-                elif n + 2 <= ind <= m + n + 1:
-                    edge = [each_line.split(' ')[0],
-                            each_line.split(' ')[1]]
-                    data['edges'].append(edge)
-                    data['costs'].append(float(each_line.split(' ')[2]))
-                elif ind == m + n + 2:
-                    sub_graph = [int(_) for _ in each_line.split(' ')]
-                    data['true_sub_graph'] = sub_graph
-                    data['true_x'] = np.zeros(n)
-                    data['true_x'][sub_graph] = 1.
-                elif ind == m + n + 3:
-                    sub_feature = [int(_) for _ in each_line.split(' ')]
-                    data['true_sub_feature'] = sub_feature
-                    data['true_y'] = np.zeros(p)
-                    data['true_y'][sub_feature] = 1.
-        data['data_matrix'] = np.asarray(data['data_matrix'],
-                                         dtype=np.float64)
-        data['edges'] = np.asarray(data['edges'], dtype=int)
-        data['costs'] = np.asarray(data['costs'],
-                                   dtype=np.float64)
-        file_name = root_path + 'chicago_%s_case_%d.pkl' % \
-                    (event_type, test_case)
-        bz2_f = bz2.BZ2File(file_name, 'wb')
-        cPickle.dump(data, bz2_f)
 
 
 def normalize_gradient(x, grad):
@@ -219,9 +153,16 @@ def identify_direction(grad, s):
 
 
 def sg_pursuit_algo(para):
-    k, s, data_matrix, edges, costs, max_iter = para
+    k, s, data_matrix, edges, costs, max_iter, true_nodes, true_features = para
     func = FuncEMS(data_matrix=data_matrix)
     xt, yt = func.get_initial_point(k, s)
+    print(np.nonzero(xt)[0])
+    print(np.nonzero(yt)[0])
+    print(np.linalg.norm(xt), np.linalg.norm(yt))
+    print(node_pre_rec_fm(true_nodes=true_nodes,
+                          pred_nodes=np.nonzero(xt)[0]))
+    print(node_pre_rec_fm(true_nodes=true_features,
+                          pred_nodes=np.nonzero(yt)[0]))
     run_time_head_tail = 0.0
     for tt in range(max_iter):
         iter_time = time.time()
@@ -275,7 +216,10 @@ def run_single_process(para):
             len(chicago_data['true_sub_feature']),
             chicago_data['data_matrix'],
             chicago_data['edges'],
-            chicago_data['costs'], 5)
+            chicago_data['costs'], 5,
+            chicago_data['true_sub_graph'],
+            chicago_data['true_sub_feature'])
+    start_time = time.time()
     xt, yt = sg_pursuit_algo(para)
     n_pre_rec_fm = node_pre_rec_fm(
         true_nodes=chicago_data['true_sub_graph'],
@@ -285,7 +229,8 @@ def run_single_process(para):
         pred_nodes=np.nonzero(yt)[0])
     print(n_pre_rec_fm)
     print(f_pre_rec_fm)
-    return n_pre_rec_fm, f_pre_rec_fm
+    run_time = time.time() - start_time
+    return event_type, test_case, run_time, n_pre_rec_fm, f_pre_rec_fm
 
 
 def main():
@@ -295,12 +240,25 @@ def main():
     results_pool = pool.map(run_single_process, input_paras)
     pool.close()
     pool.join()
-    cPickle.dump(results_pool, open('output/output_chicago.pkl', 'wb'))
+    cPickle.dump(results_pool, open('../output/output_chicago.pkl', 'wb'))
+    summary_results = {'BATTERY': [[], [], []], 'BURGLARY': [[], [], []]}
     for result in results_pool:
-        pre, rec, fm = result[0]
+        event_type, test_case, run_time, n_pre_rec_fm, f_pre_rec_fm = result
+        summary_results[event_type][0].append(n_pre_rec_fm[2])
+        summary_results[event_type][1].append(f_pre_rec_fm[2])
+        summary_results[event_type][2].append(run_time)
+        pre, rec, fm = n_pre_rec_fm
         print('node_pre_rec_fm: %.4f %.4f %.4f' % (pre, rec, fm))
-        pre, rec, fm = result[1]
+        pre, rec, fm = f_pre_rec_fm
         print('feature_pre_rec_fm: %.4f %.4f %.4f' % (pre, rec, fm))
+    print('----- node-fm ---- attribute-fm ---- run_time -----')
+    print('BATTERY', np.mean(sorted(summary_results['BATTERY'][0])[1:51]),
+          np.mean(sorted(summary_results['BATTERY'][1])[1:51]),
+          np.mean(sorted(summary_results['BATTERY'][2])[1:51]))
+    print('BURGLARY', np.mean(sorted(summary_results['BURGLARY'][0])[1:51]),
+          np.mean(sorted(summary_results['BURGLARY'][1])[1:51]),
+          np.mean(sorted(summary_results['BURGLARY'][2])[1:51]))
+    print('run_time')
 
 
 if __name__ == '__main__':
