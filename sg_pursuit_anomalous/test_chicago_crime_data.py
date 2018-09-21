@@ -296,7 +296,7 @@ def main():
     results_pool = pool.map(run_single_process, input_paras)
     pool.close()
     pool.join()
-    cPickle.dump(results_pool, open('output/output_chicago.pkl', 'wb'))
+    cPickle.dump(results_pool, open('../output/output_chicago.pkl', 'wb'))
     for result in results_pool:
         pre, rec, fm = result[0]
         print('node_pre_rec_fm: %.4f %.4f %.4f' % (pre, rec, fm))
