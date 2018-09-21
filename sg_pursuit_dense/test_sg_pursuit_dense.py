@@ -319,13 +319,13 @@ def PCA_gradientX(x,y,W,A,lambda0,adjust=0.0):
         return None
 
 
-    non_zero_count=0.0
+    non_zero_count=0.0 #[0,1]
     for i in range(len(x)):
         if x[i]>0.0 and x[i]<1.0: non_zero_count+=1.0
     if non_zero_count>0.0:
-        xTW = x.dot(W)
+        xTW = np.dot(W.T,x)
     else:
-        xTW = median_xTW(x,W)
+        xTW = median_WTx(x,W)
 
 
     Ix = np.ones(len(x))
@@ -334,9 +334,9 @@ def PCA_gradientX(x,y,W,A,lambda0,adjust=0.0):
     xW_1Tx = xTW * (1.0 / xT1)
     term1 = (1.0 / (sigmas1+adjust)) * np.multiply(W - np.outer(Ix, xW_1Tx), W - np.outer(Ix, xW_1Tx)).dot(y)
     term2 = (1.0 / sigmas2) * np.multiply(W, W).dot(y)
-    ATx = x.dot(A)
+    ATx = np.dot(A,x)
     ATx_1Tx = 1.0 / xT1 * ATx
-    dense_term=lambda0*(ATx_1Tx-(1.0/(xT1*xT1)*ATx.dot(x)))*Ix
+    dense_term=lambda0*(ATx_1Tx-(1.0/(xT1*xT1)*x.dot(ATx)))*Ix
     gradient=term1-term2-dense_term
 
     return gradient
@@ -369,7 +369,7 @@ def PCA_gradientY(x,y,W,A,lambda0=0.0,adjust=0.0):
     if non_zero_count>0.0:
         xTW = W.T.dot(x)
     else:
-        xTW = median_xTW(x,W)
+        xTW = median_WTx(x,W)
 
 
     Ix = np.ones(len(x))
@@ -459,7 +459,7 @@ def updatedMinimizerY(gradientY,indicatorY,y,stepSize,bound=5):
 
     return normalizedY
 
-def median_xTW(x,W):
+def median_WTx(x,W):
     medians=np.zeros_like(W[0])
     S=getSupp(x)
     for i in range(len(W[0])):
@@ -493,12 +493,12 @@ def sg_pursuit_dense(edges, edgeCost, k, s, W,A,lambda0, maxIter, g):
     num_feats = len(W[0])
     print("num_nodes:%d num_feat:%d"%(num_nodes,num_feats))
     # initialize values x0,y0
-    xi = np.zeros(num_nodes)
-    yi = np.zeros(num_feats)
+    # xi = np.zeros(num_nodes)
+    # yi = np.zeros(num_feats)
     # for i in random.choice(range(num_nodes), k): xi[i] = random.random()
     # for i in random.choice(range(num_feats), s): xi[i] = random.random()
-    (xi,yi)=calcualte_initial_val(W,A,num_nodes,num_feats,k,s)
-    old_func_value=-1;
+    (xi,yi)=calcualte_initial_val(W,A,num_nodes,num_feats,k,s) #W,A,n,p,k,s
+    old_func_value=-1
     for numOfIter in range(maxIter):
         print("SG-Pursuit: Iteration:------{}------".format(numOfIter))
 
@@ -627,8 +627,13 @@ def test_varying_num_attr():
         tasks = multiprocessing.Queue()
         results = multiprocessing.Queue()
         # Start consumers
+<<<<<<< HEAD
         num_consumers = 1  # number of cores.
         print 'Creating %d consumers' % num_consumers
+=======
+        num_consumers = 50  # number of cores.
+        print num_feat, 'Creating %d consumers' % num_consumers
+>>>>>>> 622608f11ce79fbc3eef2f3ddf1fc2f4fdb49450
         consumers = [Consumer(tasks, results)
                      for i in range(num_consumers)]
         for w in consumers:
@@ -657,7 +662,7 @@ def test_varying_num_attr():
             f_pre_rec_fm = node_pre_rec_fm(
                 true_nodes=data['true_sub_feature'],
                 pred_nodes=np.nonzero(yi)[0])
-            print num_jobs, ">>", n_pre_rec_fm, f_pre_rec_fm, running_times
+            print num_jobs, ">>", n_pre_rec_fm, f_pre_rec_fm, running_time
             node_prf[0].append(n_pre_rec_fm[0])
             node_prf[1].append(n_pre_rec_fm[1])
             node_prf[2].append(n_pre_rec_fm[2])
@@ -690,7 +695,7 @@ def test_varying_num_cluster():
         tasks = multiprocessing.Queue()
         results = multiprocessing.Queue()
         # Start consumers
-        num_consumers = 15  # number of cores.
+        num_consumers = 50  # number of cores.
         print iter, 'Creating %d consumers' % num_consumers
         consumers = [Consumer(tasks, results)
                      for i in range(num_consumers)]
@@ -720,7 +725,7 @@ def test_varying_num_cluster():
             f_pre_rec_fm = node_pre_rec_fm(
                 true_nodes=data['true_sub_feature'],
                 pred_nodes=np.nonzero(yi)[0])
-            print num_jobs, ">>", n_pre_rec_fm, f_pre_rec_fm, running_times
+            print num_jobs, ">>", n_pre_rec_fm, f_pre_rec_fm, running_time
             node_prf[0].append(n_pre_rec_fm[0])
             node_prf[1].append(n_pre_rec_fm[1])
             node_prf[2].append(n_pre_rec_fm[2])
@@ -749,7 +754,7 @@ def test_varying_cluster_size():
         tasks = multiprocessing.Queue()
         results = multiprocessing.Queue()
         # Start consumers
-        num_consumers = 15  # number of cores.
+        num_consumers = 50  # number of cores.
         print iter, 'Creating %d consumers' % num_consumers
         consumers = [Consumer(tasks, results)
                      for i in range(num_consumers)]
@@ -786,7 +791,7 @@ def test_varying_cluster_size():
             f_pre_rec_fm = node_pre_rec_fm(
                 true_nodes=data['true_sub_feature'],
                 pred_nodes=np.nonzero(yi)[0])
-            print num_jobs, ">>", n_pre_rec_fm, f_pre_rec_fm, running_times
+            print num_jobs, ">>", n_pre_rec_fm, f_pre_rec_fm, running_time
             node_prf[0].append(n_pre_rec_fm[0])
             node_prf[1].append(n_pre_rec_fm[1])
             node_prf[2].append(n_pre_rec_fm[2])
@@ -809,8 +814,8 @@ def test_varying_cluster_size():
 
 def main():
     test_varying_num_attr()
-    # # test_varying_num_cluster()
-    # test_varying_cluster_size()
+    test_varying_num_cluster()
+    test_varying_cluster_size()
 
 
 
