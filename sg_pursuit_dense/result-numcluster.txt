@@ -1,0 +1,1 @@
+VaryingAtt: num_attirbute:14 avg_node_fm:0.020736   avg_feat_fm0.092000 avg_runtime:145.390146+
