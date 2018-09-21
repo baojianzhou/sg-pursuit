@@ -203,62 +203,45 @@ def sg_pursuit_algo(para):
 
 def run_single_process(para):
     event_type, test_case = para
-    file_name = 'chicago_%s_case_%d.pkl' % (event_type, test_case)
-    chicago_data = cPickle.load(bz2.BZ2File(root_path + file_name))
-    true_x = np.zeros(chicago_data['n'])
-    true_y = np.zeros(chicago_data['p'])
-    true_x[chicago_data['true_sub_graph']] = 1.
-    true_y[chicago_data['true_sub_feature']] = 1.
-    func = FuncEMS(chicago_data['data_matrix'])
+    file_name = 'yelp_%s_case_%d.pkl' % (event_type, test_case)
+    yelp_data = cPickle.load(bz2.BZ2File(root_path + file_name))
+    true_x = np.zeros(yelp_data['n'])
+    true_y = np.zeros(yelp_data['p'])
+    true_x[yelp_data['true_sub_graph']] = 1.
+    true_y[yelp_data['true_sub_feature']] = 1.
+    func = FuncEMS(yelp_data['data_matrix'])
     true_val = func.get_fun_val(true_x, true_y)
     print('true value: %.4f' % true_val)
-    para = (len(chicago_data['true_sub_graph']) / 2,
-            len(chicago_data['true_sub_feature']),
-            chicago_data['data_matrix'],
-            chicago_data['edges'],
-            chicago_data['costs'], 5,
-            chicago_data['true_sub_graph'],
-            chicago_data['true_sub_feature'])
+    para = (len(yelp_data['true_sub_graph']) / 2,
+            len(yelp_data['true_sub_feature']),
+            yelp_data['data_matrix'],
+            yelp_data['edges'],
+            yelp_data['costs'], 5,
+            yelp_data['true_sub_graph'],
+            yelp_data['true_sub_feature'])
     start_time = time.time()
     xt, yt = sg_pursuit_algo(para)
     n_pre_rec_fm = node_pre_rec_fm(
-        true_nodes=chicago_data['true_sub_graph'],
+        true_nodes=yelp_data['true_sub_graph'],
         pred_nodes=np.nonzero(xt)[0])
-    f_pre_rec_fm = node_pre_rec_fm(
-        true_nodes=chicago_data['true_sub_feature'],
-        pred_nodes=np.nonzero(yt)[0])
     print(n_pre_rec_fm)
-    print(f_pre_rec_fm)
+    selected_words = []
+    ind_words = {ind: word for (word, ind) in yelp_data['words_dict'].items()}
+    sorted_indices = np.argsort(yt)
+    for i in range(yelp_data['s']):
+        selected_words.append(ind_words[sorted_indices[i]])
     run_time = time.time() - start_time
-    return event_type, test_case, run_time, n_pre_rec_fm, f_pre_rec_fm
+    return event_type, test_case, run_time, n_pre_rec_fm, selected_words
 
 
 def main():
     num_cpu = int(sys.argv[1])
-    input_paras = [_ for _ in product(['BATTERY', 'BURGLARY'], range(52))]
+    input_paras = [_ for _ in product(['2014_2015'], range(52))]
     pool = multiprocessing.Pool(processes=num_cpu)
     results_pool = pool.map(run_single_process, input_paras)
     pool.close()
     pool.join()
-    cPickle.dump(results_pool, open('../output/output_chicago.pkl', 'wb'))
-    summary_results = {'BATTERY': [[], [], []], 'BURGLARY': [[], [], []]}
-    for result in results_pool:
-        event_type, test_case, run_time, n_pre_rec_fm, f_pre_rec_fm = result
-        summary_results[event_type][0].append(n_pre_rec_fm[2])
-        summary_results[event_type][1].append(f_pre_rec_fm[2])
-        summary_results[event_type][2].append(run_time)
-        pre, rec, fm = n_pre_rec_fm
-        print('node_pre_rec_fm: %.4f %.4f %.4f' % (pre, rec, fm))
-        pre, rec, fm = f_pre_rec_fm
-        print('feature_pre_rec_fm: %.4f %.4f %.4f' % (pre, rec, fm))
-    print('----- node-fm ---- attribute-fm ---- run_time -----')
-    print('BATTERY', np.mean(sorted(summary_results['BATTERY'][0])[1:51]),
-          np.mean(sorted(summary_results['BATTERY'][1])[1:51]),
-          np.mean(sorted(summary_results['BATTERY'][2])[1:51]))
-    print('BURGLARY', np.mean(sorted(summary_results['BURGLARY'][0])[1:51]),
-          np.mean(sorted(summary_results['BURGLARY'][1])[1:51]),
-          np.mean(sorted(summary_results['BURGLARY'][2])[1:51]))
-    print('run_time')
+    cPickle.dump(results_pool, open('../output/output_yelp.pkl', 'wb'))
 
 
 if __name__ == '__main__':
