@@ -126,7 +126,7 @@ def data_convert_yelp():
         data['data_matrix'] = np.asarray(data['data_matrix'], dtype=np.float64)
         data['edges'] = np.asarray(data['edges'], dtype=int)
         data['costs'] = np.asarray(data['costs'], dtype=np.float64)
-        file_name = root_path + 'chicago_%s_case_%d.pkl' % \
+        file_name = '../input/data_yelp/chicago_%s_case_%d.pkl' % \
                     (event_type, test_case)
         bz2_f = bz2.BZ2File(file_name, 'wb')
         cPickle.dump(data, bz2_f)
