@@ -59,7 +59,7 @@ def identifyDirection(gradient, s):
     for i in range(s):
         if i < len(indexes) and squareGradient[indexes[i]] > 0.0:
             gammaY.add(indexes[i])
-    print(type(gammaY))
+    # print(type(gammaY))
     return gammaY
 
 
@@ -72,7 +72,7 @@ return the projected vector.
 
 
 def projectionOnVector(vector, sset):
-    if vector == None or set == None: return None
+    # if vector == None or sset == None: return None
     projectedVector = np.zeros_like(vector)
     for i in range(len(vector)):
         if i in sset: projectedVector[i] = vector[i]
@@ -385,36 +385,38 @@ def PCA_gradientY(x,y,W,A,lambda0=0.0,adjust=0.0):
 
     return gradient
 
-def PCA_multiGradientDecent4PCAScore(x0,y0,OmegaX,OmegaY,W,A,lambda0,maxIter=1000,stepSize=0.1):
-    print("Start argmin f(x,y) ...")
+def PCA_multiGradientDecent4PCAScore(x0,y0,OmegaX,OmegaY,W,A,lambda0,maxIter=1000,stepSize=0.01):
+    # print("Start argmin f(x,y) ...")
     indicatorX = getIndicateVector(OmegaX,len(x0))
     indicatorY = getIndicateVector(OmegaY, len(y0))
     x=copy.deepcopy(x0)
     y=copy.deepcopy(y0)
     for i in xrange(maxIter):
-        t=0.0
-        while True:
-            gradientX=PCA_gradientX(x,y,W,A,lambda0,t*0.01)
-            t+=1.0
-            if np.min(gradientX)>0.0: break
-
-        t = 0.0
-        while True:
-            gradientY = PCA_gradientY(x, y, W, A, lambda0, t * 0.01)
-            t += 1.0
-            if np.min(gradientY) > 0.0: break
-
+        # t=0.0
+        # while True:
+        #     gradientX=PCA_gradientX(x,y,W,A,lambda0,t*0.01)
+        #     t+=1.0
+        #     if np.min(gradientX)>0.0: break
+        #
+        # t = 0.0
+        # while True:
+        #     gradientY = PCA_gradientY(x, y, W, A, lambda0, t * 0.01)
+        #     t += 1.0
+        #     if np.min(gradientY) > 0.0: break
+        gradientX = PCA_gradientX(x, y, W, A, lambda0)
+        gradientY = PCA_gradientY(x, y, W, A, lambda0)
 
         xOld = copy.deepcopy(x)
         yOld = copy.deepcopy(y)
         x = updatedMinimizerX(gradientX,indicatorX,x,stepSize,5)
         y = updatedMinimizerY(gradientY, indicatorY,y,stepSize,5)
 
-        diffNormX = np.sqrt(np.sum((x-xOld)**2))
-        diffNormY = np.sqrt(np.sum((y-yOld)**2))
+        diffNormX = np.linalg.norm(x-xOld)
+        diffNormY = np.linalg.norm(y-yOld)
+        # if i % 100 == 0: print("processes: {}".format(i))
 
         if diffNormX<=1e-6  and diffNormY<=1e-6:break
-        if i%100==0: print("processes: {}".format(i))
+
 
 
 
@@ -533,7 +535,7 @@ def sg_pursuit_dense(edges, edgeCost, k, s, W,A,lambda0, maxIter=5, g=1.0, B=3.)
         """line 14"""
         yi = projectionOnVector(by, psiY)
 
-        func_value = PCA_getFuncValue(xi, yi, W)
+        func_value = PCA_getFuncValue(xi, yi, W,A,lambda0)
 
         if old_func_value==-1:
             old_func_value=func_value
@@ -545,7 +547,7 @@ def sg_pursuit_dense(edges, edgeCost, k, s, W,A,lambda0, maxIter=5, g=1.0, B=3.)
 
     running_time = time.time() - start_time
 
-    return xi, yi
+    return xi, yi,running_time
 
 
 """************************************************************************************************
@@ -565,27 +567,115 @@ def adj_matrix(edges,n):
 
 def test_varying_num_attr():
     data_folder="../input/dense_supgraph/simu_fig4/"
-    for num_feat in [20,40,80,100][:1]:
+    for num_feat in [20,40,80,100][:]:
+        node_prf=[[],[],[]]
+        feat_prf=[[],[],[]]
+        running_times=[]
         filename="VaryingAttribute_numAtt_%d.pkl"%(num_feat)
         datas = cPickle.load(bz2.BZ2File(data_folder + filename))
-        for case,data in datas.items()[:1]:
+        for case,data in datas.items()[:]:
             k=len(data["true_sub_graph"])/2
             s=len(data["true_sub_feature"])
             lambda0=5.0
             A=adj_matrix(data["edges"],data["n"])
-            xi,yi=sg_pursuit_dense(data["edges"], data["costs"], k, s,data["data_matrix"] ,A, lambda0, maxIter=5, g=1, B=k-1.0)
+            xi,yi,running_time=sg_pursuit_dense(data["edges"], data["costs"], k, s,data["data_matrix"] ,A, lambda0, maxIter=5, g=1, B=k-1.0)
             n_pre_rec_fm = node_pre_rec_fm(
                 true_nodes=data['true_sub_graph'],
                 pred_nodes=np.nonzero(xi)[0])
             f_pre_rec_fm = node_pre_rec_fm(
                 true_nodes=data['true_sub_feature'],
                 pred_nodes=np.nonzero(yi)[0])
-            print(n_pre_rec_fm)
-            print(f_pre_rec_fm)
-            return n_pre_rec_fm, f_pre_rec_fm
+            node_prf[0].append(n_pre_rec_fm[0])
+            node_prf[1].append(n_pre_rec_fm[1])
+            node_prf[2].append(n_pre_rec_fm[2])
+
+            feat_prf[0].append(f_pre_rec_fm[0])
+            feat_prf[1].append(f_pre_rec_fm[1])
+            feat_prf[2].append(f_pre_rec_fm[2])
+
+            running_times.append(running_time)
+
+        print("VaryingAtt: num_attirbute:%d avg_node_fm:%f   avg_feat_fm%f avg_runtime:%f"%(num_feat,np.mean(node_prf[2]),np.mean(feat_prf),np.mean(running_times)))
+        with open("result.txt","w") as op:
+            op.write("VaryingAtt: num_attirbute:%d avg_node_fm:%f   avg_feat_fm%f avg_runtime:%f+\n"%(num_feat,np.mean(node_prf[2]),np.mean(feat_prf),np.mean(running_times)))
+
+def test_varying_num_cluster():
+    data_folder="../input/dense_supgraph/simu_fig4/"
+    for num_cluster in [10,12,14,15,20,25][:]:
+        node_prf=[[],[],[]]
+        feat_prf=[[],[],[]]
+        running_times=[]
+        filename="VaryingNumClusters_numCluster_%d.pkl"%(num_cluster)
+        datas = cPickle.load(bz2.BZ2File(data_folder + filename))
+        for case,data in datas.items()[:]:
+            print(filename,case)
+            k=len(data["true_sub_graph"])/2
+            s=len(data["true_sub_feature"])
+            lambda0=5.0
+            A=adj_matrix(data["edges"],data["n"])
+            xi,yi,running_time=sg_pursuit_dense(data["edges"], data["costs"], k, s,data["data_matrix"] ,A, lambda0, maxIter=5, g=1, B=k-1.0)
+            n_pre_rec_fm = node_pre_rec_fm(
+                true_nodes=data['true_sub_graph'],
+                pred_nodes=np.nonzero(xi)[0])
+            f_pre_rec_fm = node_pre_rec_fm(
+                true_nodes=data['true_sub_feature'],
+                pred_nodes=np.nonzero(yi)[0])
+            node_prf[0].append(n_pre_rec_fm[0])
+            node_prf[1].append(n_pre_rec_fm[1])
+            node_prf[2].append(n_pre_rec_fm[2])
+
+            feat_prf[0].append(f_pre_rec_fm[0])
+            feat_prf[1].append(f_pre_rec_fm[1])
+            feat_prf[2].append(f_pre_rec_fm[2])
+
+            running_times.append(running_time)
+
+        print("VaryingAtt: num_attirbute:%d avg_node_fm:%f   avg_feat_fm%f avg_runtime:%f"%(num_cluster,np.mean(node_prf[2]),np.mean(feat_prf),np.mean(running_times)))
+        with open("result-numcluster.txt","w") as op:
+            op.write("VaryingAtt: num_attirbute:%d avg_node_fm:%f   avg_feat_fm%f avg_runtime:%f\n"%(num_cluster,np.mean(node_prf[2]),np.mean(feat_prf),np.mean(running_times)))
 
 
+def test_varying_cluster_size():
+    data_folder="../input/dense_supgraph/simu_fig4/"
+    for cluster_sizes in [(30,100),(30,150),(30,200),(30,300),(30,400)][:]:
+        node_prf=[[],[],[]]
+        feat_prf=[[],[],[]]
+        running_times=[]
+        for case in range(50)[:]:
+            filename="VaryingClusterSizes_numCluster_%d_%d_case-%d.pkl"%(cluster_sizes[0],cluster_sizes[1],case)
+            try:
+                data = cPickle.load(bz2.BZ2File(data_folder + filename))
+            except:
+                print("File not exist..")
+                continue
 
+            print(filename)
+            # print data["true_sub_graph"]
+            k=len(data["true_sub_graph"])/2
+            s=len(data["true_sub_feature"])
+            lambda0=5.0
+            A=adj_matrix(data["edges"],data["n"])
+            xi,yi,running_time=sg_pursuit_dense(data["edges"], data["costs"], k, s,data["data_matrix"] ,A, lambda0, maxIter=5, g=1, B=k-1.0)
+            n_pre_rec_fm = node_pre_rec_fm(
+                true_nodes=data['true_sub_graph'],
+                pred_nodes=np.nonzero(xi)[0])
+            f_pre_rec_fm = node_pre_rec_fm(
+                true_nodes=data['true_sub_feature'],
+                pred_nodes=np.nonzero(yi)[0])
+            print ">>",n_pre_rec_fm,f_pre_rec_fm,running_times
+            node_prf[0].append(n_pre_rec_fm[0])
+            node_prf[1].append(n_pre_rec_fm[1])
+            node_prf[2].append(n_pre_rec_fm[2])
+
+            feat_prf[0].append(f_pre_rec_fm[0])
+            feat_prf[1].append(f_pre_rec_fm[1])
+            feat_prf[2].append(f_pre_rec_fm[2])
+
+            running_times.append(running_time)
+
+        print("VaryingClusterSize: cluster size:%d - %d avg_node_fm:%f   avg_feat_fm%f avg_runtime:%f"%(cluster_sizes[0],cluster_sizes[0],np.mean(node_prf[2]),np.mean(feat_prf),np.mean(running_times)))
+        with open("result-clustersize.txt","w") as op:
+            op.write("VaryingClusterSize: cluster size:%d - %d avg_node_fm:%f   avg_feat_fm%f avg_runtime:%f\n"%(cluster_sizes[0],cluster_sizes[0],np.mean(node_prf[2]),np.mean(feat_prf),np.mean(running_times)))
 
 
 
@@ -593,8 +683,9 @@ def test_varying_num_attr():
 
 
 def main():
-    test_varying_num_attr()
-
+    # test_varying_num_attr()
+    # test_varying_num_cluster()
+    test_varying_cluster_size()
 
 
 
