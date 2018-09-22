@@ -438,7 +438,7 @@ def updatedMinimizerX(gradientX,indicatorX,x,stepSize,bound=5):
         elif normalizedX[j]>=1.0:
             normalizedX[j]=1.0
     if cnt==len(x):
-        print("!!!!!Warning: Sigmas1 is too large and all values in the gradient vector are nonpositive!!!")
+        # print("!!!!!Warning: Sigmas1 is too large and all values in the gradient vector are nonpositive!!!")
         for i in xrange(bound):
             normalizedX[indexes[i]]=1.0
 
@@ -456,7 +456,7 @@ def updatedMinimizerY(gradientY,indicatorY,y,stepSize,bound=5):
         elif normalizedY[j]>=1.0:
             normalizedY[j]=1.0
     if cnt==len(y):
-        print("!!!!!Warning: Sigmas1 is too small and all values in the gradient vector are nonpositive!!!")
+        # print("!!!!!Warning: Sigmas1 is too small and all values in the gradient vector are nonpositive!!!")
         for i in xrange(bound):
             normalizedY[indexes[i]]=1.0
 
@@ -628,10 +628,10 @@ def adj_matrix(edges,n):
 
 def test_varying_num_attr():
     data_folder="../input/dense_supgraph/simu_fig4/"
-    out_file="result-VaryingAtt-debug.txt"
+    out_file="result-VaryingAtt.txt"
     with open("../output/"+out_file, "a+") as op:
         op.write("\n\n###  "+str(datetime.datetime.now())+"  ###\n")
-    for num_feat in [20,40,80,100][:1]:
+    for num_feat in [20,40,80,100][:]:
         node_prf=[[],[],[]]
         feat_prf=[[],[],[]]
         running_times=[]
@@ -642,14 +642,14 @@ def test_varying_num_attr():
         results = multiprocessing.Queue()
         # Start consumers
 
-        num_consumers = 10  # number of cores
+        num_consumers = 50  # number of cores
         print num_feat, 'Creating %d consumers' % num_consumers
         consumers = [Consumer(tasks, results)
                      for i in range(num_consumers)]
         for w in consumers:
             w.start()
 
-        for case,data in datas.items()[:10]:
+        for case,data in datas.items()[:]:
             k=len(data["true_sub_graph"])/2
             s=len(data["true_sub_feature"])
             lambda0=5.0
@@ -672,7 +672,7 @@ def test_varying_num_attr():
             f_pre_rec_fm = node_pre_rec_fm(
                 true_nodes=true_feats,
                 pred_nodes=np.nonzero(yi)[0])
-            print case,num_jobs, ">>", n_pre_rec_fm, f_pre_rec_fm,func_value, running_time
+            print("Case:{}, Node:{} ,Feat:{} ,Func_value:{} ,Running:{} ".format(case,n_pre_rec_fm,f_pre_rec_fm,func_value,running_time))
             node_prf[0].append(n_pre_rec_fm[0])
             node_prf[1].append(n_pre_rec_fm[1])
             node_prf[2].append(n_pre_rec_fm[2])
@@ -687,13 +687,14 @@ def test_varying_num_attr():
 
 
 
-        print("VaryingAtt: %d %f %f %f\n"%(num_feat,np.mean(node_prf[2]),np.mean(feat_prf[2]),round(np.mean(running_times),2)))
+        print(">>VaryingAtt: %d %f %f %f\n"%(num_feat,np.mean(node_prf[2]),np.mean(feat_prf[2]),round(np.mean(running_times),2)))
         with open("../output/"+out_file,"a+") as op:
             op.write("VaryingAtt: %d %f %f %f\n"%(num_feat,np.mean(node_prf[2]),np.mean(feat_prf[2]),round(np.mean(running_times),2)))
 
 def test_varying_num_cluster():
     data_folder="../input/dense_supgraph/simu_fig4/"
-    with open("../output/result-VaryingNumCluster.txt", "a+") as op:
+    out_file="result-VaryingNumCluster.txt"
+    with open("../output/"+out_file, "a+") as op:
         op.write("\n\n###  "+str(datetime.datetime.now())+"  ###\n")
     for num_cluster in [10,12,14,15,20,25][:]:
         node_prf=[[],[],[]]
@@ -705,7 +706,7 @@ def test_varying_num_cluster():
         tasks = multiprocessing.Queue()
         results = multiprocessing.Queue()
         # Start consumers
-        num_consumers = 10  # number of cores.
+        num_consumers = 50  # number of cores.
         print num_cluster, 'Creating %d consumers' % num_consumers
         consumers = [Consumer(tasks, results)
                      for i in range(num_consumers)]
@@ -733,7 +734,9 @@ def test_varying_num_cluster():
             f_pre_rec_fm = node_pre_rec_fm(
                 true_nodes=true_feats,
                 pred_nodes=np.nonzero(yi)[0])
-            print case, num_jobs, ">>", n_pre_rec_fm, f_pre_rec_fm, func_value, running_time
+            print("Case:{}, Node:{} ,Feat:{} ,Func_value:{} ,Running:{} ".format(case, n_pre_rec_fm,
+                                                                                 f_pre_rec_fm, func_value,
+                                                                                 running_time))
             node_prf[0].append(n_pre_rec_fm[0])
             node_prf[1].append(n_pre_rec_fm[1])
             node_prf[2].append(n_pre_rec_fm[2])
@@ -746,13 +749,14 @@ def test_varying_num_cluster():
             num_jobs -= 1.0
 
         print("VaryingAtt: num_attirbute:%d avg_node_fm:%f   avg_feat_fm%f avg_runtime:%f"%(num_cluster,np.mean(node_prf[2]),np.mean(feat_prf[2]),round(np.mean(running_times),2)))
-        with open("../output/result-VaryingNumCluster.txt","a+") as op:
+        with open("../output/"+out_file,"a+") as op:
             op.write("VaryingNumCluster %f %f %f %f\n"%(num_cluster,np.mean(node_prf[2]),np.mean(feat_prf[2]),round(np.mean(running_times),2)))
 
 
 def test_varying_cluster_size():
     data_folder="../input/dense_supgraph/simu_fig4/"
-    with open("../output/result-VaryingClusterSize.txt", "a+") as op:
+    out_file="result-VaryingClusterSize.txt"
+    with open("../output/"+out_file, "a+") as op:
         op.write("\n\n###  "+str(datetime.datetime.now())+"  ###\n")
     for cluster_sizes in [(30,100),(30,150),(30,200),(30,300),(30,400)][:]:
         node_prf=[[],[],[]]
@@ -791,14 +795,16 @@ def test_varying_cluster_size():
         for i in range(num_consumers):
             tasks.put(None)
         while num_jobs:
-            xi, yi, running_time,case = results.get()
+            xi, yi, running_time, true_subgraph, true_feats, case, func_value = results.get()
             n_pre_rec_fm = node_pre_rec_fm(
-                true_nodes=data['true_sub_graph'],
+                true_nodes=true_subgraph,
                 pred_nodes=np.nonzero(xi)[0])
             f_pre_rec_fm = node_pre_rec_fm(
-                true_nodes=data['true_sub_feature'],
+                true_nodes=true_feats,
                 pred_nodes=np.nonzero(yi)[0])
-            print case,num_jobs, ">>", n_pre_rec_fm, f_pre_rec_fm, running_time
+            print("Case:{}, Node:{} ,Feat:{} ,Func_value:{} ,Running:{} ".format(case, n_pre_rec_fm,
+                                                                                 f_pre_rec_fm, func_value,
+                                                                                 running_time))
             node_prf[0].append(n_pre_rec_fm[0])
             node_prf[1].append(n_pre_rec_fm[1])
             node_prf[2].append(n_pre_rec_fm[2])
@@ -811,7 +817,7 @@ def test_varying_cluster_size():
             num_jobs -= 1.0
 
         print("VaryingClusterSize: cluster size:%d - %d avg_node_fm:%f   avg_feat_fm%f avg_runtime:%f"%(cluster_sizes[0],cluster_sizes[0],np.mean(node_prf[2]),np.mean(feat_prf),np.mean(running_times)))
-        with open("../output/result-VaryingClusterSize.txt","a+") as op:
+        with open("../output/"+out_file,"a+") as op:
             op.write("VaryingClusterSize %d_%d %f %f %f\n"%(cluster_sizes[0],cluster_sizes[0],np.mean(node_prf[2]),np.mean(feat_prf),round(np.mean(running_times),2)))
 
 
@@ -820,8 +826,8 @@ def test_varying_cluster_size():
 
 
 def main():
-    # test_varying_num_attr()
-    test_varying_num_cluster()
+    test_varying_num_attr()
+    # test_varying_num_cluster()
     # test_varying_cluster_size()
 
 
