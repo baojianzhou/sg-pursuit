@@ -581,7 +581,7 @@ class Consumer(multiprocessing.Process):
         return
 
 class task_sg_pursuit(object):
-    def __init__(self, edges, edgeCost, k, s, W,A,lambda0, maxIter, g):
+    def __init__(self, edges, edgeCost, k, s, W,A,lambda0,true_subgraph,true_feats,case, maxIter, g):
         self.edges = edges
         self.edgeCost=edgeCost
         self.k=k
@@ -591,13 +591,16 @@ class task_sg_pursuit(object):
         self.lambda0 = lambda0
         self.maxIter = maxIter
         self.g = g
+        self.case=case
+        self.true_subgraph=true_subgraph
+        self.true_feats=true_feats
 
     def __call__(self):
         # this is the place to do your work
         # time.sleep(0.1) # pretend to take some time to do our work
         #admm(omega, b, X_b, y_t, Y, X, edge_up_nns,edge_down_nns, omega_0, R, dict_paths, psl, approx, report_stat)
         xi, yi, running_time = sg_pursuit_dense(self.edges, self.edgeCost, self.k, self.s, self.W,self.A,self.lambda0, self.maxIter, self.g)
-        return xi, yi, running_time
+        return xi, yi, running_time,self.true_subgraph,self.true_feats,self.case
 
     def __str__(self):
         return '%s' % (self.p0)
@@ -614,9 +617,10 @@ def adj_matrix(edges,n):
 
 def test_varying_num_attr():
     data_folder="../input/dense_supgraph/simu_fig4/"
-    with open("../output/result-VaryingAtt.txt", "a+") as op:
+    out_file="result-VaryingAtt-debug.txt"
+    with open("../output/"+out_file, "a+") as op:
         op.write("\n\n###  "+str(datetime.datetime.now())+"  ###\n")
-    for num_feat in [20,40,80,100][:]:
+    for num_feat in [20,40,80,100][:1]:
         node_prf=[[],[],[]]
         feat_prf=[[],[],[]]
         running_times=[]
@@ -626,37 +630,37 @@ def test_varying_num_attr():
         tasks = multiprocessing.Queue()
         results = multiprocessing.Queue()
         # Start consumers
-        num_consumers = 50  # number of cores.
+
+        num_consumers = 1  # number of cores
         print num_feat, 'Creating %d consumers' % num_consumers
         consumers = [Consumer(tasks, results)
                      for i in range(num_consumers)]
         for w in consumers:
             w.start()
 
-        for case,data in datas.items()[:]:
+        for case,data in datas.items()[:5]:
             k=len(data["true_sub_graph"])/2
             s=len(data["true_sub_feature"])
             lambda0=5.0
             A=adj_matrix(data["edges"],data["n"])
 
-
-
             #edges, edgeCost, k, s, W,A,lambda0, maxIter=5, g=1.0, B=3.
             # xi,yi,running_time=sg_pursuit_dense(data["edges"], data["costs"], k, s,data["data_matrix"] ,A, lambda0, maxIter=5, g=1)
-            tasks.put(task_sg_pursuit(data["edges"], data["costs"], k, s,data["data_matrix"] ,A, lambda0, maxIter=5, g=1))
+            tasks.put(task_sg_pursuit(data["edges"], data["costs"], k, s,data["data_matrix"] ,A, lambda0,data['true_sub_graph'],data['true_sub_feature'],case, maxIter=5, g=1))
             num_jobs +=1.0
+            data={}
 
         for i in range(num_consumers):
             tasks.put(None)
         while num_jobs:
-            xi,yi,running_time = results.get()
+            xi,yi,running_time,true_subgraph,true_feats,case = results.get()
             n_pre_rec_fm = node_pre_rec_fm(
-                true_nodes=data['true_sub_graph'],
+                true_nodes=true_subgraph,
                 pred_nodes=np.nonzero(xi)[0])
             f_pre_rec_fm = node_pre_rec_fm(
-                true_nodes=data['true_sub_feature'],
+                true_nodes=true_feats,
                 pred_nodes=np.nonzero(yi)[0])
-            print num_jobs, ">>", n_pre_rec_fm, f_pre_rec_fm, running_time
+            print case,num_jobs, ">>", n_pre_rec_fm, f_pre_rec_fm, running_time
             node_prf[0].append(n_pre_rec_fm[0])
             node_prf[1].append(n_pre_rec_fm[1])
             node_prf[2].append(n_pre_rec_fm[2])
@@ -671,9 +675,9 @@ def test_varying_num_attr():
 
 
 
-        print("VaryingAtt: %f %f %f %f\n"%(num_feat,np.mean(node_prf[2]),np.mean(feat_prf[2]),round(np.mean(running_times),2)))
-        with open("../output/result-VaryingAtt.txt","a+") as op:
-            op.write("VaryingAtt: %f %f %f %f\n"%(num_feat,np.mean(node_prf[2]),np.mean(feat_prf[2]),round(np.mean(running_times),2)))
+        print("VaryingAtt: %d %f %f %f\n"%(num_feat,np.mean(node_prf[2]),np.mean(feat_prf[2]),round(np.mean(running_times),2)))
+        with open("../output/"+out_file,"a+") as op:
+            op.write("VaryingAtt: %d %f %f %f\n"%(num_feat,np.mean(node_prf[2]),np.mean(feat_prf[2]),round(np.mean(running_times),2)))
 
 def test_varying_num_cluster():
     data_folder="../input/dense_supgraph/simu_fig4/"
@@ -706,20 +710,20 @@ def test_varying_num_cluster():
             # edges, edgeCost, k, s, W,A,lambda0, maxIter=5, g=1.0, B=3.
             # xi,yi,running_time=sg_pursuit_dense(data["edges"], data["costs"], k, s,data["data_matrix"] ,A, lambda0, maxIter=5, g=1)
             tasks.put(
-                task_sg_pursuit(data["edges"], data["costs"], k, s, data["data_matrix"], A, lambda0, maxIter=5, g=1))
+                task_sg_pursuit(data["edges"], data["costs"], k, s, data["data_matrix"], A, lambda0,case, maxIter=5, g=1))
             num_jobs += 1.0
 
         for i in range(num_consumers):
             tasks.put(None)
         while num_jobs:
-            xi, yi, running_time = results.get()
+            xi, yi, running_time,case = results.get()
             n_pre_rec_fm = node_pre_rec_fm(
                 true_nodes=data['true_sub_graph'],
                 pred_nodes=np.nonzero(xi)[0])
             f_pre_rec_fm = node_pre_rec_fm(
                 true_nodes=data['true_sub_feature'],
                 pred_nodes=np.nonzero(yi)[0])
-            print num_jobs, ">>", n_pre_rec_fm, f_pre_rec_fm, running_time
+            print case,num_jobs, ">>", n_pre_rec_fm, f_pre_rec_fm, running_time
             node_prf[0].append(n_pre_rec_fm[0])
             node_prf[1].append(n_pre_rec_fm[1])
             node_prf[2].append(n_pre_rec_fm[2])
@@ -771,21 +775,21 @@ def test_varying_cluster_size():
             # edges, edgeCost, k, s, W,A,lambda0, maxIter=5, g=1.0, B=3.
             # xi,yi,running_time=sg_pursuit_dense(data["edges"], data["costs"], k, s,data["data_matrix"] ,A, lambda0, maxIter=5, g=1)
             tasks.put(
-                task_sg_pursuit(data["edges"], data["costs"], k, s, data["data_matrix"], A, lambda0, maxIter=5,
+                task_sg_pursuit(data["edges"], data["costs"], k, s, data["data_matrix"], A, lambda0,case, maxIter=5,
                                 g=1))
             num_jobs += 1.0
 
         for i in range(num_consumers):
             tasks.put(None)
         while num_jobs:
-            xi, yi, running_time = results.get()
+            xi, yi, running_time,case = results.get()
             n_pre_rec_fm = node_pre_rec_fm(
                 true_nodes=data['true_sub_graph'],
                 pred_nodes=np.nonzero(xi)[0])
             f_pre_rec_fm = node_pre_rec_fm(
                 true_nodes=data['true_sub_feature'],
                 pred_nodes=np.nonzero(yi)[0])
-            print num_jobs, ">>", n_pre_rec_fm, f_pre_rec_fm, running_time
+            print case,num_jobs, ">>", n_pre_rec_fm, f_pre_rec_fm, running_time
             node_prf[0].append(n_pre_rec_fm[0])
             node_prf[1].append(n_pre_rec_fm[1])
             node_prf[2].append(n_pre_rec_fm[2])
@@ -808,8 +812,8 @@ def test_varying_cluster_size():
 
 def main():
     test_varying_num_attr()
-    test_varying_num_cluster()
-    test_varying_cluster_size()
+    # test_varying_num_cluster()
+    # test_varying_cluster_size()
 
 
 
