@@ -132,8 +132,10 @@ def get_fun(X,Y,W,A,n,p,lambda0=0): #(x,y,W,A,lambda0)
         x[int(i)]=1.0
     for i in Y:
         y[int(i)]=1.0
-    fval=PCA_getFuncValue(x,y,W,A,lambda0)
+    fval=PCA_getFuncValue(x,y,W,A,lambda0)#x,y,W,A,lambda0
     return fval#x,y,W,A,lambda0
+
+
 def sorted_indexes(x):
     return np.array(x).argsort()[::-1]
 
@@ -158,17 +160,20 @@ def calcualte_initial_val(W,A,n,p,k,s):
         scores.append([0.0 for i in range(p)])
 
     for j in range(p):
-
         for i in range(n):
-            nns=set(np.nonzero(A[i])[0])
-            dists=[0.0 for i in range(len(nns))]
+            nns=list(np.nonzero(A[i])[0])
+            # print nns
+            dists=[0.0 for _ in range(len(nns))]
             for kk in range(len(nns)):
-                dists[kk]=np.abs(W[kk][j]-W[i][j])
+                dists[kk]=np.abs(W[nns[kk]][j]-W[i][j])
+                # print nns[kk],i,j,W[nns[kk]][j],W[i][j]
+                # time.sleep(1000)
+            # print sorted(dists)
 
             if len(nns)>1.0:
-                x0[i]=np.percentile(dists,50)*-1.0
+                x0[i]=-np.percentile(dists,50)
             else:
-                x0[i] = np.mean(dists)*-1.0
+                x0[i] = -np.mean(dists)
 
         indexes = x0.argsort()[::-1]
 
@@ -179,13 +184,12 @@ def calcualte_initial_val(W,A,n,p,k,s):
                 S.append(indexes[i])
             if len(S)>0:
                 rank=ranknodes(S,k,A)
+                # print len(S),S
+                # print "rank",rank
+                # time.sleep(1000)
                 fval=get_fun(rank,[j],W,A,n,p,0) #X,Y,W,A,n,p,lambda0=0
-                if fval==None:
-                    scores[ii][j] = -1000
-                    res[ii].append([])
-                    continue
 
-                scores[ii][j]=fval*-1
+                scores[ii][j]=-fval
                 res[ii].append(rank)
             else:
                 scores[ii][j]=-1000
@@ -246,9 +250,9 @@ def calcualte_initial_val(W,A,n,p,k,s):
 
     if np.sum(x0) == 0:
         print("NOTICE: no good initialization of x can be idetnfied!!!!!!!!!!!!!!!!!!!!!!!!!")
-        x0[0] = 1
-        x0[1] = 1
-        x0[2] = 1
+        x0[0] = 1.0
+        x0[1] = 1.0
+        x0[2] = 1.0
 
     if np.sum(y0) == 0:
         print("NOTICE: no good initialization of y can be idetnfied!!!!!!!!!!!!!!!!!!!!!!!!!")
@@ -273,20 +277,19 @@ PCA score : \sigma_{1..n} (w_iy - xWy/1^Tx)^2 - lambda*xAx/1^Tx
 
 def PCA_getFuncValue(x,y,W,A,lambda0):
     funcValue=0.0
-    if len(x)!=len(W) or len(y)!=len(W[0]):
-        print("Error:Invalid parameter....(PCA_getFuncValue)")
-        return None
-    elif np.sum(x)==0:
-        print("Error:X vector all zeros....(PCA_getFuncValue)")
-        return None
-    elif  np.sum(y)==0:
-        print("Error:Y vector all zeros....(PCA_getFuncValue)")
-        return None
+    # if len(x)!=len(W) or len(y)!=len(W[0]):
+    #     print("Error:Invalid parameter....(PCA_getFuncValue)")
+    #     return None
+    # elif np.sum(x)==0:
+    #     print("Error:X vector all zeros....(PCA_getFuncValue)")
+    #     return None
+    # elif  np.sum(y)==0:
+    #     print("Error:Y vector all zeros....(PCA_getFuncValue)")
+    #     return None
 
     Ix=np.ones(len(x))
     xT1=np.sum(x)
-    yT1=np.sum(y)
-    xTW = x.dot(W)
+    xTW = W.T.dot(x)
     xW_1Tx=xTW*(1.0/xT1)
     term1=(1.0/sigmas1)*np.multiply(W-np.outer(Ix,xW_1Tx),W-np.outer(Ix,xW_1Tx)).dot(y)
     term2=(1.0/sigmas2)*np.multiply(W,W).dot(y)
@@ -295,9 +298,9 @@ def PCA_getFuncValue(x,y,W,A,lambda0):
     funcValue=diff.dot(x)
 
     if lambda0>0:
-        ATx=x.dot(A)
-        ATx_1Tx=1.0/xT1*ATx
-        funcValue=funcValue - lambda0*ATx_1Tx.dot(x)
+        ATx=np.dot(A,x)
+        ATx_1Tx=(1.0/xT1)*ATx
+        funcValue=funcValue - lambda0*np.dot(x,ATx_1Tx)
 
     return funcValue
 
@@ -461,13 +464,16 @@ def updatedMinimizerY(gradientY,indicatorY,y,stepSize,bound=5):
 
 def median_WTx(x,W):
     medians=np.zeros_like(W[0])
-    S=getSupp(x)
+
+    S=list(getSupp(x))
     for i in range(len(W[0])):
         vals=np.zeros(len(S))
         for k,j in enumerate(S):
             vals[k]=x[j]*W[j][i]
         medians[i]=np.percentile(vals,50)*np.sum(x)
-
+    # print S
+    # print medians
+    # time.sleep(1000)
     return medians
 
 
@@ -497,12 +503,17 @@ def sg_pursuit_dense(edges, edgeCost, k, s, W,A,lambda0, maxIter, g):
     # yi = np.zeros(num_feats)
     # for i in random.choice(range(num_nodes), k): xi[i] = random.random()
     # for i in random.choice(range(num_feats), s): xi[i] = random.random()
-    (xi,yi)=calcualte_initial_val(W,A,num_nodes,num_feats,k,s) #W,A,n,p,k,s
+    (xi,yi)=calcualte_initial_val(W,A,num_nodes,num_feats,20,3) #W,A,n,p,k,s
+    # print sum(xi),len(getSupp(xi))
+    # print sum(yi),len(getSupp(yi))
+    # time.sleep(100)
     old_func_value=-1
+    func_value=-1
     for numOfIter in range(maxIter):
-        print("SG-Pursuit: Iteration:------{}------".format(numOfIter))
+        # print("SG-Pursuit: Iteration:------{}------".format(numOfIter))
 
         # calcualte normalized gradient
+        t0=time.time()
         gradientFx = PCA_gradientX(xi, yi,W,A,lambda0)
         gradientFy = PCA_gradientY(xi, yi,W,A,lambda0)
         gradientFx = normalized_Gradient(xi, gradientFx)
@@ -549,7 +560,7 @@ def sg_pursuit_dense(edges, edgeCost, k, s, W,A,lambda0, maxIter, g):
 
     running_time = time.time() - start_time
 
-    return xi, yi,running_time
+    return xi, yi,running_time,func_value
 
 
 """************************************************************************************************
@@ -599,8 +610,8 @@ class task_sg_pursuit(object):
         # this is the place to do your work
         # time.sleep(0.1) # pretend to take some time to do our work
         #admm(omega, b, X_b, y_t, Y, X, edge_up_nns,edge_down_nns, omega_0, R, dict_paths, psl, approx, report_stat)
-        xi, yi, running_time = sg_pursuit_dense(self.edges, self.edgeCost, self.k, self.s, self.W,self.A,self.lambda0, self.maxIter, self.g)
-        return xi, yi, running_time,self.true_subgraph,self.true_feats,self.case
+        xi, yi, running_time,func_value = sg_pursuit_dense(self.edges, self.edgeCost, self.k, self.s, self.W,self.A,self.lambda0, self.maxIter, self.g)
+        return xi, yi, running_time,self.true_subgraph,self.true_feats,self.case,func_value
 
     def __str__(self):
         return '%s' % (self.p0)
@@ -631,19 +642,20 @@ def test_varying_num_attr():
         results = multiprocessing.Queue()
         # Start consumers
 
-        num_consumers = 1  # number of cores
+        num_consumers = 10  # number of cores
         print num_feat, 'Creating %d consumers' % num_consumers
         consumers = [Consumer(tasks, results)
                      for i in range(num_consumers)]
         for w in consumers:
             w.start()
 
-        for case,data in datas.items()[:5]:
+        for case,data in datas.items()[:10]:
             k=len(data["true_sub_graph"])/2
             s=len(data["true_sub_feature"])
             lambda0=5.0
             A=adj_matrix(data["edges"],data["n"])
-
+            # print(data["true_sub_graph"])
+            # print(data["true_sub_feature"])
             #edges, edgeCost, k, s, W,A,lambda0, maxIter=5, g=1.0, B=3.
             # xi,yi,running_time=sg_pursuit_dense(data["edges"], data["costs"], k, s,data["data_matrix"] ,A, lambda0, maxIter=5, g=1)
             tasks.put(task_sg_pursuit(data["edges"], data["costs"], k, s,data["data_matrix"] ,A, lambda0,data['true_sub_graph'],data['true_sub_feature'],case, maxIter=5, g=1))
@@ -653,14 +665,14 @@ def test_varying_num_attr():
         for i in range(num_consumers):
             tasks.put(None)
         while num_jobs:
-            xi,yi,running_time,true_subgraph,true_feats,case = results.get()
+            xi,yi,running_time,true_subgraph,true_feats,case,func_value = results.get()
             n_pre_rec_fm = node_pre_rec_fm(
                 true_nodes=true_subgraph,
                 pred_nodes=np.nonzero(xi)[0])
             f_pre_rec_fm = node_pre_rec_fm(
                 true_nodes=true_feats,
                 pred_nodes=np.nonzero(yi)[0])
-            print case,num_jobs, ">>", n_pre_rec_fm, f_pre_rec_fm, running_time
+            print case,num_jobs, ">>", n_pre_rec_fm, f_pre_rec_fm,func_value, running_time
             node_prf[0].append(n_pre_rec_fm[0])
             node_prf[1].append(n_pre_rec_fm[1])
             node_prf[2].append(n_pre_rec_fm[2])
@@ -693,8 +705,8 @@ def test_varying_num_cluster():
         tasks = multiprocessing.Queue()
         results = multiprocessing.Queue()
         # Start consumers
-        num_consumers = 50  # number of cores.
-        print iter, 'Creating %d consumers' % num_consumers
+        num_consumers = 10  # number of cores.
+        print num_cluster, 'Creating %d consumers' % num_consumers
         consumers = [Consumer(tasks, results)
                      for i in range(num_consumers)]
         for w in consumers:
@@ -705,25 +717,23 @@ def test_varying_num_cluster():
             lambda0 = 5.0
             A = adj_matrix(data["edges"], data["n"])
 
-
-
             # edges, edgeCost, k, s, W,A,lambda0, maxIter=5, g=1.0, B=3.
             # xi,yi,running_time=sg_pursuit_dense(data["edges"], data["costs"], k, s,data["data_matrix"] ,A, lambda0, maxIter=5, g=1)
             tasks.put(
-                task_sg_pursuit(data["edges"], data["costs"], k, s, data["data_matrix"], A, lambda0,case, maxIter=5, g=1))
+                task_sg_pursuit(data["edges"], data["costs"], k, s,data["data_matrix"] ,A, lambda0,data['true_sub_graph'],data['true_sub_feature'],case, maxIter=5, g=1))
             num_jobs += 1.0
 
         for i in range(num_consumers):
             tasks.put(None)
         while num_jobs:
-            xi, yi, running_time,case = results.get()
+            xi, yi, running_time, true_subgraph, true_feats, case, func_value = results.get()
             n_pre_rec_fm = node_pre_rec_fm(
-                true_nodes=data['true_sub_graph'],
+                true_nodes=true_subgraph,
                 pred_nodes=np.nonzero(xi)[0])
             f_pre_rec_fm = node_pre_rec_fm(
-                true_nodes=data['true_sub_feature'],
+                true_nodes=true_feats,
                 pred_nodes=np.nonzero(yi)[0])
-            print case,num_jobs, ">>", n_pre_rec_fm, f_pre_rec_fm, running_time
+            print case, num_jobs, ">>", n_pre_rec_fm, f_pre_rec_fm, func_value, running_time
             node_prf[0].append(n_pre_rec_fm[0])
             node_prf[1].append(n_pre_rec_fm[1])
             node_prf[2].append(n_pre_rec_fm[2])
@@ -775,8 +785,7 @@ def test_varying_cluster_size():
             # edges, edgeCost, k, s, W,A,lambda0, maxIter=5, g=1.0, B=3.
             # xi,yi,running_time=sg_pursuit_dense(data["edges"], data["costs"], k, s,data["data_matrix"] ,A, lambda0, maxIter=5, g=1)
             tasks.put(
-                task_sg_pursuit(data["edges"], data["costs"], k, s, data["data_matrix"], A, lambda0,case, maxIter=5,
-                                g=1))
+                task_sg_pursuit(data["edges"], data["costs"], k, s,data["data_matrix"] ,A, lambda0,data['true_sub_graph'],data['true_sub_feature'],case, maxIter=5, g=1))
             num_jobs += 1.0
 
         for i in range(num_consumers):
@@ -811,8 +820,8 @@ def test_varying_cluster_size():
 
 
 def main():
-    test_varying_num_attr()
-    # test_varying_num_cluster()
+    # test_varying_num_attr()
+    test_varying_num_cluster()
     # test_varying_cluster_size()
 
 
