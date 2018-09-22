@@ -461,7 +461,7 @@ def updatedMinimizerY(gradientY,indicatorY,y,stepSize,bound=5):
 
 def median_WTx(x,W):
     medians=np.zeros_like(W[0])
-    S=getSupp(x)
+    S=list(getSupp(x))
     for i in range(len(W[0])):
         vals=np.zeros(len(S))
         for k,j in enumerate(S):
