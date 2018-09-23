@@ -1,0 +1,204 @@
+<built-in function iter> Creating 50 consumers
+num_nodes:1343 num_feat:100
+num_nodes:1719 num_feat:100
+num_nodes:1294 num_feat:100
+num_nodes:1589 num_feat:100
+num_nodes:1837 num_feat:100
+num_nodes:1319 num_feat:100
+num_nodes:1588 num_feat:100
+num_nodes:1861 num_feat:100
+num_nodes:1776 num_feat:100
+num_nodes:1503 num_feat:100
+num_nodes:1617 num_feat:100
+num_nodes:1290 num_feat:100
+num_nodes:1249 num_feat:100
+num_nodes:1791 num_feat:100
+num_nodes:1276 num_feat:100
+num_nodes:1547 num_feat:100
+num_nodes:1713 num_feat:100
+num_nodes:1418 num_feat:100
+num_nodes:1937 num_feat:100
+num_nodes:1532 num_feat:100
+num_nodes:1419 num_feat:100
+num_nodes:1306 num_feat:100
+num_nodes:1676 num_feat:100
+num_nodes:1875 num_feat:100
+num_nodes:1517 num_feat:100
+num_nodes:1532 num_feat:100
+num_nodes:1984 num_feat:100
+num_nodes:1707 num_feat:100
+num_nodes:1859 num_feat:100
+num_nodes:1733 num_feat:100
+num_nodes:1544 num_feat:100
+num_nodes:1894 num_feat:100
+num_nodes:1390 num_feat:100
+num_nodes:1783 num_feat:100
+num_nodes:2076 num_feat:100
+num_nodes:2356 num_feat:100
+num_nodes:1717 num_feat:100
+num_nodes:1871 num_feat:100
+num_nodes:2090 num_feat:100
+num_nodes:1812 num_feat:100
+num_nodes:1717 num_feat:100
+num_nodes:2001 num_feat:100
+num_nodes:1670 num_feat:100
+num_nodes:2123 num_feat:100
+num_nodes:1450 num_feat:100
+num_nodes:1696 num_feat:100
+num_nodes:1349 num_feat:100
+num_nodes:1363 num_feat:100
+num_nodes:1734 num_feat:100
+num_nodes:1859 num_feat:100
+Case:4, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 0.6, 0.7499999999999999] ,Func_value:-815.215403064 ,Running:212.801025152 
+Case:1, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 0.9, 0.9473684210526316] ,Func_value:-617.218603168 ,Running:415.426090002 
+Case:20, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 0.9, 0.9473684210526316] ,Func_value:-934.856911396 ,Running:358.817882061 
+Case:10, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 1.0, 1.0] ,Func_value:-936.695162264 ,Running:448.099805117 
+Case:3, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 0.8, 0.888888888888889] ,Func_value:-1335.17472521 ,Running:539.83709693 
+Case:19, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 1.0, 1.0] ,Func_value:-543.712119282 ,Running:477.458846092 
+Case:15, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 0.9, 0.9473684210526316] ,Func_value:-1098.00529033 ,Running:535.262211084 
+Case:5, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 1.0, 1.0] ,Func_value:-693.683476695 ,Running:592.227069855 
+Case:7, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 1.0, 1.0] ,Func_value:-673.051335421 ,Running:590.205157042 
+Case:21, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 0.9, 0.9473684210526316] ,Func_value:-624.999609098 ,Running:525.502036095 
+Case:17, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 0.8, 0.888888888888889] ,Func_value:-779.53654278 ,Running:607.084212065 
+Case:31, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 0.7, 0.8235294117647058] ,Func_value:-865.025427697 ,Running:525.232734919 
+Case:43, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 1.0, 1.0] ,Func_value:-464.5261746 ,Running:460.190263987 
+Case:12, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 0.9, 0.9473684210526316] ,Func_value:-1583.60766106 ,Running:685.579467058 
+Case:28, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 0.8, 0.888888888888889] ,Func_value:-387.853278165 ,Running:627.583837032 
+Case:0, Node:[0.0, 0.0, 0.0] ,Feat:[0.0, 0.0, 0.0] ,Func_value:-7.24152913081 ,Running:817.272520065 
+Case:22, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 0.9, 0.9473684210526316] ,Func_value:-879.068774066 ,Running:744.313511133 
+Case:39, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 0.7, 0.8235294117647058] ,Func_value:-580.103590666 ,Running:634.557222843 
+Case:11, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 0.9, 0.9473684210526316] ,Func_value:-774.821901596 ,Running:847.603206158 
+Case:37, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 0.9, 0.9473684210526316] ,Func_value:-1009.24415319 ,Running:681.423125029 
+Case:2, Node:[1.0, 0.008264462809917356, 0.01639344262295082] ,Feat:[0.1, 0.1, 0.10000000000000002] ,Func_value:-18.5933164873 ,Running:942.048478127 
+Case:41, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 1.0, 1.0] ,Func_value:-611.022315499 ,Running:704.12528801 
+Case:35, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 1.0, 1.0] ,Func_value:-874.400844893 ,Running:793.093096972 
+Case:9, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 1.0, 1.0] ,Func_value:-318.341360322 ,Running:975.59168911 
+Case:44, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 0.7, 0.8235294117647058] ,Func_value:-924.019335753 ,Running:760.24060297 
+Case:46, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 1.0, 1.0] ,Func_value:-914.896434378 ,Running:757.507667065 
+Case:16, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 0.9, 0.9473684210526316] ,Func_value:-1253.10620491 ,Running:1001.96481013 
+Case:30, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 0.8, 0.888888888888889] ,Func_value:-591.221488758 ,Running:949.944417 
+Case:32, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 1.0, 1.0] ,Func_value:-812.68833194 ,Running:965.711853027 
+Case:27, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 0.9, 0.9473684210526316] ,Func_value:-1219.55750906 ,Running:1009.75099206 
+Case:26, Node:[0.0, 0.0, 0.0] ,Feat:[0.0, 0.0, 0.0] ,Func_value:-21.4161204902 ,Running:1023.06866693 
+Case:8, Node:[1.0, 0.2605633802816901, 0.4134078212290503] ,Feat:[0.875, 0.7, 0.7777777777777777] ,Func_value:-185.10857742 ,Running:1147.47545791 
+Case:40, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 0.9, 0.9473684210526316] ,Func_value:-269.939617651 ,Running:940.924987078 
+Case:25, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 0.9, 0.9473684210526316] ,Func_value:-502.750564031 ,Running:1080.69616103 
+Case:13, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 1.0, 1.0] ,Func_value:-1399.9600638 ,Running:1176.54166222 
+Case:14, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 1.0, 1.0] ,Func_value:-1868.94396608 ,Running:1172.75726104 
+Case:6, Node:[1.0, 0.0045045045045045045, 0.008968609865470852] ,Feat:[0.0, 0.0, 0.0] ,Func_value:-15.9013248114 ,Running:1250.8294208 
+Case:45, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 0.8, 0.888888888888889] ,Func_value:-540.777932366 ,Running:1003.75061488 
+Case:36, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 0.8, 0.888888888888889] ,Func_value:-1030.52389893 ,Running:1081.11375809 
+Case:49, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 1.0, 1.0] ,Func_value:-1230.08039624 ,Running:973.557281017 
+Case:42, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 1.0, 1.0] ,Func_value:-233.545866596 ,Running:1064.02447796 
+Case:48, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 1.0, 1.0] ,Func_value:-861.155695172 ,Running:1041.91205311 
+Case:34, Node:[0.0, 0.0, 0.0] ,Feat:[0.3, 0.3, 0.3] ,Func_value:-19.5687003977 ,Running:1186.16091204 
+Case:29, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 0.8, 0.888888888888889] ,Func_value:-1197.72577503 ,Running:1233.02961302 
+Case:38, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 1.0, 1.0] ,Func_value:-571.710823309 ,Running:1168.34874988 
+Case:47, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 1.0, 1.0] ,Func_value:-329.081288314 ,Running:1099.5596211 
+Case:23, Node:[1.0, 0.9655172413793104, 0.9824561403508771] ,Feat:[1.0, 0.8, 0.888888888888889] ,Func_value:-160.339339436 ,Running:1307.25771594 
+Case:18, Node:[1.0, 0.022556390977443608, 0.04411764705882353] ,Feat:[0.6, 0.6, 0.6] ,Func_value:-20.4705009791 ,Running:1454.29768109 
+Case:24, Node:[1.0, 0.008438818565400843, 0.01673640167364017] ,Feat:[0.4, 0.4, 0.4000000000000001] ,Func_value:-12.1415315394 ,Running:1512.41086102 
+Case:33, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 1.0, 1.0] ,Func_value:-1168.56526429 ,Running:1455.37392402 
+VaryingClusterSize: cluster size:30 - 30 avg_node_fm:0.849642   avg_feat_fm0.841019 avg_runtime:871.190942
+<built-in function iter> Creating 50 consumers
+num_nodes:1793 num_feat:100
+num_nodes:2102 num_feat:100
+num_nodes:1852 num_feat:100
+num_nodes:1716 num_feat:100
+num_nodes:1772 num_feat:100
+num_nodes:1446 num_feat:100
+num_nodes:1991 num_feat:100
+num_nodes:1892 num_feat:100
+num_nodes:1611 num_feat:100
+num_nodes:2193 num_feat:100
+num_nodes:1405 num_feat:100
+num_nodes:1603 num_feat:100
+num_nodes:2006 num_feat:100
+num_nodes:1281 num_feat:100
+num_nodes:2378 num_feat:100
+num_nodes:1978 num_feat:100
+num_nodes:1948 num_feat:100
+num_nodes:2101 num_feat:100
+num_nodes:1657 num_feat:100
+num_nodes:2241 num_feat:100
+num_nodes:1963 num_feat:100
+num_nodes:2259 num_feat:100
+num_nodes:2176 num_feat:100
+num_nodes:1593 num_feat:100
+num_nodes:1510 num_feat:100
+num_nodes:2097 num_feat:100
+num_nodes:2059 num_feat:100
+num_nodes:2098 num_feat:100
+num_nodes:1799 num_feat:100
+num_nodes:2436 num_feat:100
+num_nodes:1792 num_feat:100
+num_nodes:2035 num_feat:100
+num_nodes:2178 num_feat:100
+num_nodes:2621 num_feat:100
+num_nodes:2531 num_feat:100
+num_nodes:2630 num_feat:100
+num_nodes:1526 num_feat:100
+num_nodes:2398 num_feat:100
+num_nodes:2333 num_feat:100
+num_nodes:2199 num_feat:100
+num_nodes:2772 num_feat:100
+num_nodes:2712 num_feat:100
+num_nodes:2283 num_feat:100
+num_nodes:2054 num_feat:100
+num_nodes:2563 num_feat:100
+num_nodes:2152 num_feat:100
+num_nodes:2718 num_feat:100
+num_nodes:1617 num_feat:100
+num_nodes:2407 num_feat:100
+num_nodes:2393 num_feat:100
+Case:4, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 0.9, 0.9473684210526316] ,Func_value:-1115.83579317 ,Running:399.406327009 
+Case:0, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 1.0, 1.0] ,Func_value:-1728.57725617 ,Running:471.026273966 
+Case:6, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 0.9, 0.9473684210526316] ,Func_value:-594.616356141 ,Running:454.603378773 
+Case:12, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 1.0, 1.0] ,Func_value:-386.051466606 ,Running:438.543446064 
+Case:15, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 0.9, 0.9473684210526316] ,Func_value:-2450.87259372 ,Running:472.629064083 
+Case:24, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 1.0, 1.0] ,Func_value:-817.369725522 ,Running:406.715001106 
+Case:9, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 0.9, 0.9473684210526316] ,Func_value:-1436.49975055 ,Running:537.175084114 
+Case:11, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 0.9, 0.9473684210526316] ,Func_value:-2412.59834876 ,Running:537.643918991 
+Case:14, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 0.9, 0.9473684210526316] ,Func_value:-770.090432242 ,Running:529.214724064 
+Case:3, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 1.0, 1.0] ,Func_value:-2105.6059607 ,Running:595.694463015 
+Case:1, Node:[1.0, 0.020689655172413793, 0.040540540540540536] ,Feat:[0.7, 0.7, 0.7] ,Func_value:-23.7663310194 ,Running:631.053575993 
+Case:29, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 0.9, 0.9473684210526316] ,Func_value:-1435.59071213 ,Running:484.324018002 
+Case:10, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 0.9, 0.9473684210526316] ,Func_value:-1088.44588665 ,Running:663.915917873 
+Case:40, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 1.0, 1.0] ,Func_value:-689.154129626 ,Running:451.477998018 
+Case:2, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 0.9, 0.9473684210526316] ,Func_value:-774.153843256 ,Running:760.983831882 
+Case:21, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 0.8, 0.888888888888889] ,Func_value:-892.288287454 ,Running:653.734179974 
+Case:20, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 1.0, 1.0] ,Func_value:-2122.85069036 ,Running:698.877733946 
+Case:18, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 1.0, 1.0] ,Func_value:-1160.84447676 ,Running:762.650157928 
+Case:36, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 0.9, 0.9473684210526316] ,Func_value:-473.226509624 ,Running:630.267802 
+Case:5, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 1.0, 1.0] ,Func_value:-351.171951691 ,Running:901.893252134 
+Case:30, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 1.0, 1.0] ,Func_value:-922.277921842 ,Running:758.665351152 
+Case:16, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 0.9, 0.9473684210526316] ,Func_value:-1555.17925495 ,Running:892.507536173 
+Case:13, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 0.9, 0.9473684210526316] ,Func_value:-821.608135176 ,Running:999.479379177 
+Case:48, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 1.0, 1.0] ,Func_value:-315.270873865 ,Running:668.387883902 
+Case:47, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 0.9, 0.9473684210526316] ,Func_value:-1442.9509647 ,Running:736.376607895 
+Case:7, Node:[0.0, 0.0, 0.0] ,Feat:[1.0, 0.1, 0.18181818181818182] ,Func_value:-158.464859449 ,Running:1178.49934983 
+Case:39, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 0.9, 0.9473684210526316] ,Func_value:-616.882687175 ,Running:912.864341974 
+Case:32, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 1.0, 1.0] ,Func_value:-1083.04525512 ,Running:992.179366827 
+Case:45, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 1.0, 1.0] ,Func_value:-732.272305098 ,Running:840.814780951 
+Case:8, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 1.0, 1.0] ,Func_value:-811.348655549 ,Running:1218.455091 
+Case:44, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 0.9, 0.9473684210526316] ,Func_value:-426.239166909 ,Running:923.103396893 
+Case:34, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 0.9, 0.9473684210526316] ,Func_value:-369.546508926 ,Running:1050.32790399 
+Case:37, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 0.9, 0.9473684210526316] ,Func_value:-762.180844093 ,Running:1093.44706893 
+Case:19, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 1.0, 1.0] ,Func_value:-984.3285057 ,Running:1275.505023 
+Case:25, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 1.0, 1.0] ,Func_value:-1250.78144432 ,Running:1236.63415122 
+Case:17, Node:[1.0, 0.9946524064171123, 0.9973190348525469] ,Feat:[1.0, 0.7, 0.8235294117647058] ,Func_value:-958.227278972 ,Running:1354.86513209 
+Case:38, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 0.7, 0.8235294117647058] ,Func_value:-993.971587778 ,Running:1184.62730503 
+Case:22, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 0.8, 0.888888888888889] ,Func_value:-1748.78403032 ,Running:1401.47540998 
+Case:41, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 1.0, 1.0] ,Func_value:-1908.81550497 ,Running:1224.57306194 
+Case:49, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 0.8, 0.888888888888889] ,Func_value:-671.483162528 ,Running:1181.46968913 
+Case:23, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 0.9, 0.9473684210526316] ,Func_value:-763.017994841 ,Running:1495.03101587 
+Case:33, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 0.7, 0.8235294117647058] ,Func_value:-946.448535172 ,Running:1400.73168206 
+Case:27, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 0.9, 0.9473684210526316] ,Func_value:-1082.99729534 ,Running:1534.16119099 
+Case:35, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 1.0, 1.0] ,Func_value:-1596.68605139 ,Running:1513.609653 
+Case:46, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 0.8, 0.888888888888889] ,Func_value:-675.021160493 ,Running:1429.39530897 
+Case:26, Node:[1.0, 0.08755760368663594, 0.16101694915254236] ,Feat:[0.8, 0.8, 0.8000000000000002] ,Func_value:-86.0685969474 ,Running:1769.62515903 
+Case:43, Node:[1.0, 1.0, 1.0] ,Feat:[1.0, 1.0, 1.0] ,Func_value:-1121.21792313 ,Running:1572.05637884 
+Case:28, Node:[0.5, 0.024390243902439025, 0.046511627906976744] ,Feat:[0.2, 0.2, 0.20000000000000004] ,Func_value:-17.6219401453 ,Running:1856.19727898 
+Case:31, Node:[0.0, 0.0, 0.0] ,Feat:[0.1, 0.1, 0.10000000000000002] ,Func_value:-23.4964198116 ,Running:1873.94712305 
+Case:42, Node:[1.0, 0.010256410256410256, 0.020304568527918784] ,Feat:[0.5, 0.5, 0.5] ,Func_value:-13.5989685173 ,Running:1762.64806199 
+VaryingClusterSize: cluster size:30 - 30 avg_node_fm:0.885314   avg_feat_fm0.897386 avg_runtime:976.269817

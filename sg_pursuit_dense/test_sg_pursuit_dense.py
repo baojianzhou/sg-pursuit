@@ -389,7 +389,7 @@ def PCA_gradientY(x,y,W,A,lambda0=0.0,adjust=0.0):
 
     return gradient
 
-def PCA_multiGradientDecent4PCAScore(x0,y0,OmegaX,OmegaY,W,A,lambda0,maxIter=1000,stepSize=0.01):
+def PCA_multiGradientDecent4PCAScore(x0,y0,OmegaX,OmegaY,W,A,lambda0,maxIter=100,stepSize=0.01):
     # print("Start argmin f(x,y) ...")
     indicatorX = getIndicateVector(OmegaX,len(x0))
     indicatorY = getIndicateVector(OmegaY, len(y0))
@@ -628,7 +628,7 @@ def adj_matrix(edges,n):
 
 def test_varying_num_attr():
     data_folder="../input/dense_supgraph/simu_fig4/"
-    out_file="result-VaryingAtt.txt"
+    out_file="result-VaryingAtt-adjust.txt"
     with open("../output/"+out_file, "a+") as op:
         op.write("\n\n###  "+str(datetime.datetime.now())+"  ###\n")
     for num_feat in [20,40,80,100][:]:
@@ -693,7 +693,7 @@ def test_varying_num_attr():
 
 def test_varying_num_cluster():
     data_folder="../input/dense_supgraph/simu_fig4/"
-    out_file="result-VaryingNumCluster.txt"
+    out_file="result-VaryingNumCluster-adjust.txt"
     with open("../output/"+out_file, "a+") as op:
         op.write("\n\n###  "+str(datetime.datetime.now())+"  ###\n")
     for num_cluster in [10,12,14,15,20,25][:]:
@@ -748,17 +748,16 @@ def test_varying_num_cluster():
             running_times.append(running_time)
             num_jobs -= 1.0
 
-        print("VaryingAtt: num_attirbute:%d avg_node_fm:%f   avg_feat_fm%f avg_runtime:%f"%(num_cluster,np.mean(node_prf[2]),np.mean(feat_prf[2]),round(np.mean(running_times),2)))
+        print("VaryingNumCluster: num_attirbute:%d avg_node_fm:%f   avg_feat_fm%f avg_runtime:%f"%(num_cluster,np.mean(node_prf[2]),np.mean(feat_prf[2]),round(np.mean(running_times),2)))
         with open("../output/"+out_file,"a+") as op:
             op.write("VaryingNumCluster %f %f %f %f\n"%(num_cluster,np.mean(node_prf[2]),np.mean(feat_prf[2]),round(np.mean(running_times),2)))
-
 
 def test_varying_cluster_size():
     data_folder="../input/dense_supgraph/simu_fig4/"
     out_file="result-VaryingClusterSize.txt"
     with open("../output/"+out_file, "a+") as op:
         op.write("\n\n###  "+str(datetime.datetime.now())+"  ###\n")
-    for cluster_sizes in [(30,100),(30,150),(30,200),(30,300),(30,400)][:]:
+    for cluster_sizes in [(30,100),(30,150),(30,200),(30,300),(30,400)][4:]:
         node_prf=[[],[],[]]
         feat_prf=[[],[],[]]
         running_times=[]
@@ -767,7 +766,7 @@ def test_varying_cluster_size():
         results = multiprocessing.Queue()
         # Start consumers
         num_consumers = 50  # number of cores.
-        print iter, 'Creating %d consumers' % num_consumers
+        print cluster_sizes, 'Creating %d consumers' % num_consumers
         consumers = [Consumer(tasks, results)
                      for i in range(num_consumers)]
         for w in consumers:
@@ -818,17 +817,15 @@ def test_varying_cluster_size():
 
         print("VaryingClusterSize: cluster size:%d - %d avg_node_fm:%f   avg_feat_fm%f avg_runtime:%f"%(cluster_sizes[0],cluster_sizes[0],np.mean(node_prf[2]),np.mean(feat_prf),np.mean(running_times)))
         with open("../output/"+out_file,"a+") as op:
-            op.write("VaryingClusterSize %d_%d %f %f %f\n"%(cluster_sizes[0],cluster_sizes[0],np.mean(node_prf[2]),np.mean(feat_prf),round(np.mean(running_times),2)))
-
-
+            op.write("VaryingClusterSize %d_%d %f %f %f\n"%(cluster_sizes[0],cluster_sizes[1],np.mean(node_prf[2]),np.mean(feat_prf),round(np.mean(running_times),2)))
 
 
 
 
 def main():
-    test_varying_num_attr()
+    # test_varying_num_attr()
     # test_varying_num_cluster()
-    # test_varying_cluster_size()
+    test_varying_cluster_size()
 
 
 
