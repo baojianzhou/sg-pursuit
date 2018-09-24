@@ -1,16 +1,18 @@
-import cPickle,bz2
+import cPickle, bz2
 from sparse_learning.proj_algo import head_proj
 from sparse_learning.proj_algo import tail_proj
 import numpy as np
-import time,datetime
+import time, datetime
 import copy
 import multiprocessing
+
 # from sg_pursuit_dense import *
 # from utils.base_function import *
 
 """-----------------------------------------------------------
 Basic Fucntions
 --------------------------------------------------------------"""
+
 
 def getSupp(x):
     return set(np.nonzero(x)[0])
@@ -47,20 +49,17 @@ The goal is to maximize ||gradient_R||^2 s.t. |R| < s
 
 
 def identifyDirection(gradient, s):
-
-    if s > len(gradient): s=0.5*s
-
     if len(gradient) == 0 or s <= 0 or s > len(gradient):
         print("Error: gradient is None...  (argMax_nabla_y_Fxy)")
     # if the vector is zero, just return an empty set
     # if np.sum(gradient): return np.array([])
-    squareGradient = gradient * gradient
-    indexes = squareGradient.argsort()[::-1]
+    absGradient = np.absolute(gradient)
+    indexes = absGradient.argsort()[::-1]
     gammaY = set()
     for i in range(s):
-        if i < len(indexes) and squareGradient[indexes[i]] > 0.0:
+        if i < len(indexes) and absGradient[indexes[i]] != 0.0:
             gammaY.add(indexes[i])
-    # print(type(gammaY))
+
     return gammaY
 
 
@@ -81,11 +80,12 @@ def projectionOnVector(vector, sset):
     return projectedVector
 
 
-def getIndicateVector(S,ssize):
-    if ssize<=0: return None
-    x=np.zeros(ssize)
-    for i in S: x[i]=1.0
+def getIndicateVector(S, ssize):
+    if ssize <= 0: return None
+    x = np.zeros(ssize)
+    for i in S: x[i] = 1.0
     return x
+
 
 def node_pre_rec_fm(true_nodes, pred_nodes):
     """ Return the precision, recall and f-measure.
@@ -102,42 +102,47 @@ def node_pre_rec_fm(true_nodes, pred_nodes):
         fm = (2. * pre * rec) / (pre + rec)
     return [pre, rec, fm]
 
+
 """
 rank nodes
 """
-def ranknodes(nodes,k,A):
-    degrees=np.zeros(len(nodes))
-    rank=np.zeros(np.min([len(nodes),k]))
+
+
+def ranknodes(nodes, k, A):
+    degrees = np.zeros(len(nodes))
+    rank = np.zeros(np.min([len(nodes), k]))
     for i in range(len(nodes)):
         for j in nodes:
-            if A[nodes[i]][j]>0.0:
-                degrees[i]+=1.0
+            if A[nodes[i]][j] > 0.0:
+                degrees[i] += 1
 
     indexes = degrees.argsort()[::-1]
     for i in range(len(rank)):
-        rank[i]=nodes[indexes[i]]
+        rank[i] = nodes[indexes[i]]
 
     return rank
 
 
-
 """
 
 """
-def get_fun(X,Y,W,A,n,p,lambda0=0): #(x,y,W,A,lambda0)
-    x=np.zeros(n)
-    y=np.zeros(p)
+
+
+def get_fun(X, Y, W, A, n, p, lambda0=0):  # (x,y,W,A,lambda0)
+    x = np.zeros(n)
+    y = np.zeros(p)
     # print len(y),X,Y
     for i in X:
-        x[int(i)]=1.0
+        x[int(i)] = 1.0
     for i in Y:
-        y[int(i)]=1.0
-    fval=PCA_getFuncValue(x,y,W,A,lambda0)#x,y,W,A,lambda0
-    return fval#x,y,W,A,lambda0
+        y[int(i)] = 1.0
+    fval = PCA_getFuncValue(x, y, W, A, lambda0)  # x,y,W,A,lambda0
+    return fval  # x,y,W,A,lambda0
 
 
 def sorted_indexes(x):
     return np.array(x).argsort()[::-1]
+
 
 """
 Input : A: adjacency matrix
@@ -145,83 +150,77 @@ Input : A: adjacency matrix
         s: the maximum number of |y|<s
 
 """
-def calcualte_initial_val(W,A,n,p,k,s):
 
 
-    res=[]
-    scores=[]
-    trials=[2,3,4,5,6]
+def calcualte_initial_val(W, A, n, p, k, s):
+    res = []
+    scores = []
+    trials = [2, 3, 4, 5, 6]
 
-    x0=np.zeros(n)
-    y0=np.zeros(p)
+    x0 = np.zeros(n)
+    y0 = np.zeros(p)
 
     for i in range(len(trials)):
         res.append([])
-        scores.append([0.0 for i in range(p)])
+        scores.append([0.0 for _ in range(p)])
 
     for j in range(p):
         for i in range(n):
-            nns=list(np.nonzero(A[i])[0])
+            nns = list(np.nonzero(A[i])[0])
             # print nns
-            dists=[0.0 for _ in range(len(nns))]
+            dists = [0.0 for _ in range(len(nns))]
             for kk in range(len(nns)):
-                dists[kk]=np.abs(W[nns[kk]][j]-W[i][j])
-                # print nns[kk],i,j,W[nns[kk]][j],W[i][j]
-                # time.sleep(1000)
-            # print sorted(dists)
+                dists[kk] = np.abs(W[nns[kk]][j] - W[i][j])
 
-            if len(nns)>1.0:
-                x0[i]=-np.percentile(dists,50)
+            if len(nns) > 1.0:
+                x0[i] = -np.percentile(dists, 50)
             else:
                 x0[i] = -np.mean(dists)
 
         indexes = x0.argsort()[::-1]
 
-        ii=0
+        ii = 0
         for r in trials:
-            S=[]
-            for i in range(k*r):
+            S = []
+            for i in range(k * r):
                 S.append(indexes[i])
-            if len(S)>0:
-                rank=ranknodes(S,k,A)
-                # print len(S),S
-                # print "rank",rank
-                # time.sleep(1000)
-                fval=get_fun(rank,[j],W,A,n,p,0) #X,Y,W,A,n,p,lambda0=0
+            if len(S) > 0:
+                rank = ranknodes(S, k, A)
+                fval = get_fun(rank, [j], W, A, n, p, 0)  # X,Y,W,A,n,p,lambda0=0
 
-                scores[ii][j]=-fval
+                scores[ii][j] = -fval
                 res[ii].append(rank)
             else:
-                scores[ii][j]=-1000
+                scores[ii][j] = -1000
                 res[ii].append([])
-            ii+=1
+            ii += 1
 
-    fval=-1
-    Y=[]
-    X=[]
+    fval = -1
+    Y = []
+    X = []
     for ii in range(len(trials)):
         indexes = sorted_indexes(scores[ii])
-        Y1=[]
+        Y1 = []
         for i in range(s):
-            if scores[ii][indexes[i]]>-1000:
+            if scores[ii][indexes[i]] > -1000:
                 Y1.append(indexes[i])
         # print ii,indexes[0],len(res),len(res[ii])
-        X1=res[ii][indexes[0]]
-        fval1=get_fun(X1,Y1,W,A,n,p,0)
-        if fval==-1 or fval>fval1:
-            Y=[]
+        X1 = res[ii][indexes[0]]
+        fval1 = get_fun(X1, Y1, W, A, n, p, 0)
+        if fval == -1 or fval > fval1:
+            Y = []
             for i in Y1:
                 Y.append(i)
-            X=[]
+            X = []
             for i in X1:
                 X.append(i)
-            fval=fval1
+            fval = fval1
 
         for j in range(s):
-            X1=res[ii][indexes[j]]
-            Y1=[]
+            X1 = res[ii][indexes[j]]
+            Y1 = []
             Y1.append(indexes[j])
-            fval1=get_fun(X1,Y1,W,A,n,p,0)
+            fval1 = get_fun(X1, Y1, W, A, n, p, 0)
 
             if fval == -1 or fval > fval1:
                 Y = []
@@ -232,21 +231,23 @@ def calcualte_initial_val(W,A,n,p,k,s):
                     X.append(i)
                 fval = fval1
 
-        for j in range(2*s):
+        for j in range(2 * s):
             if indexes[j] not in Y:
-                YY=[]
+                YY = []
                 for i in Y:
                     YY.append(i)
                 YY.append(indexes[j])
-                fval1=get_fun(X,YY,W,A,n,p,0)
+                fval1 = get_fun(X, YY, W, A, n, p, 0)
                 if fval == -1 or fval > fval1:
                     Y = []
                     for i in YY:
                         Y.append(i)
-                    fval=fval1
+                    fval = fval1
 
-    for i in X: x0[int(i)]=1.0
-    for i in Y: y0[int(i)]=1.0
+    x0 = np.zeros(n)
+    y0 = np.zeros(p)
+    for i in X: x0[int(i)] = 1.0
+    for i in Y: y0[int(i)] = 1.0
 
     if np.sum(x0) == 0:
         print("NOTICE: no good initialization of x can be idetnfied!!!!!!!!!!!!!!!!!!!!!!!!!")
@@ -257,8 +258,7 @@ def calcualte_initial_val(W,A,n,p,k,s):
     if np.sum(y0) == 0:
         print("NOTICE: no good initialization of y can be idetnfied!!!!!!!!!!!!!!!!!!!!!!!!!")
         y0[0] = 1
-    return x0,y0
-
+    return x0, y0
 
 
 """---------------------------------------------------------------------------
@@ -266,8 +266,8 @@ PCA Score Function
 
 ----------------------------------------------------------------------------------"""
 
-sigmas1=0.1
-sigmas2=1.0
+sigmas1 = 0.1
+sigmas2 = 1.0
 """
 PCA score : \sigma_{1..n} (w_iy - xWy/1^Tx)^2 - lambda*xAx/1^Tx
     input: x,y,W numpy arrays
@@ -275,8 +275,8 @@ PCA score : \sigma_{1..n} (w_iy - xWy/1^Tx)^2 - lambda*xAx/1^Tx
 """
 
 
-def PCA_getFuncValue(x,y,W,A,lambda0):
-    funcValue=0.0
+def PCA_getFuncValue(x, y, W, A, lambda0):
+    funcValue = 0.0
     # if len(x)!=len(W) or len(y)!=len(W[0]):
     #     print("Error:Invalid parameter....(PCA_getFuncValue)")
     #     return None
@@ -287,20 +287,20 @@ def PCA_getFuncValue(x,y,W,A,lambda0):
     #     print("Error:Y vector all zeros....(PCA_getFuncValue)")
     #     return None
 
-    Ix=np.ones(len(x))
-    xT1=np.sum(x)
+    Ix = np.ones(len(x))
+    xT1 = np.sum(x)
     xTW = W.T.dot(x)
-    xW_1Tx=xTW*(1.0/xT1)
-    term1=(1.0/sigmas1)*np.multiply(W-np.outer(Ix,xW_1Tx),W-np.outer(Ix,xW_1Tx)).dot(y)
-    term2=(1.0/sigmas2)*np.multiply(W,W).dot(y)
-    diff=term1-term2
+    xW_1Tx = xTW * (1.0 / xT1)
+    term1 = (1.0 / sigmas1) * np.multiply(W - np.outer(Ix, xW_1Tx), W - np.outer(Ix, xW_1Tx)).dot(y)
+    term2 = (1.0 / sigmas2) * np.multiply(W, W).dot(y)
+    diff = term1 - term2
 
-    funcValue=diff.dot(x)
+    funcValue = diff.dot(x)
 
-    if lambda0>0:
-        ATx=np.dot(A,x)
-        ATx_1Tx=(1.0/xT1)*ATx
-        funcValue=funcValue - lambda0*np.dot(x,ATx_1Tx)
+    if lambda0 > 0:
+        ATx = np.dot(A, x)
+        ATx_1Tx = (1.0 / xT1) * ATx
+        funcValue = funcValue - lambda0 * np.dot(ATx_1Tx, x)
 
     return funcValue
 
@@ -310,40 +310,40 @@ PCA gradient of x
     input: x,y,W, numpy arrays
     output: gradient vector,is a numpy array
 """
-def PCA_gradientX(x,y,W,A,lambda0,adjust=0.0):
-    if len(x)!=len(W) or len(y)!=len(W[0]):
+
+
+def PCA_gradientX(x, y, W, A, lambda0, adjust=0.0):
+    if len(x) != len(W) or len(y) != len(W[0]):
         print("Error:Invalid parameter....(PCA_getFuncValue)")
         return None
-    elif np.sum(x)==0:
+    elif np.sum(x) == 0:
         print("Error:X vector all zeros....(PCA_getFuncValue)")
         return None
-    elif  np.sum(y)==0:
+    elif np.sum(y) == 0:
         print("Error:Y vector all zeros....(PCA_getFuncValue)")
         return None
 
-
-    non_zero_count=0.0 #[0,1]
+    # print adjust
+    non_zero_count = 0.0  # [0,1]
     for i in range(len(x)):
-        if x[i]>0.0 and x[i]<1.0: non_zero_count+=1.0
-    if non_zero_count>0.0:
-        xTW = np.dot(W.T,x)
+        if x[i] > 0.0 and x[i] < 1.0: non_zero_count += 1.0
+    if non_zero_count > 0.0:
+        xTW = np.dot(W.T, x)
     else:
-        xTW = median_WTx(x,W)
-
+        xTW = median_WTx(x, W)
 
     Ix = np.ones(len(x))
     xT1 = np.sum(x)
 
     xW_1Tx = xTW * (1.0 / xT1)
-    term1 = (1.0 / (sigmas1+adjust)) * np.multiply(W - np.outer(Ix, xW_1Tx), W - np.outer(Ix, xW_1Tx)).dot(y)
+    term1 = (1.0 / (sigmas1 + adjust)) * np.multiply(W - np.outer(Ix, xW_1Tx), W - np.outer(Ix, xW_1Tx)).dot(y)
     term2 = (1.0 / sigmas2) * np.multiply(W, W).dot(y)
-    ATx = np.dot(A,x)
-    ATx_1Tx = 1.0 / xT1 * ATx
-    dense_term=lambda0*(ATx_1Tx-(1.0/(xT1*xT1)*x.dot(ATx)))*Ix
-    gradient=term1-term2-dense_term
+    ATx = np.dot(A, x)
+    ATx_1Tx = (1.0 / xT1) * ATx
+    dense_term = lambda0 * (ATx_1Tx - (1.0 / (xT1 * xT1) * x.dot(ATx))) * Ix
+    gradient = term1 - term2 - dense_term
 
     return gradient
-
 
 
 """
@@ -354,26 +354,24 @@ PCA gradient of y
 """
 
 
-def PCA_gradientY(x,y,W,A,lambda0=0.0,adjust=0.0):
+def PCA_gradientY(x, y, W, A, lambda0=0.0, adjust=0.0):
     if len(x) != len(W) or len(y) != len(W[0]):
         print("Error:Invalid parameter....(PCA_getFuncValue)")
         return None
     elif np.sum(x) == 0:
         print("Error:X vector all zeros....(PCA_getFuncValue)")
         return None
-    elif np.sum(y)==0:
+    elif np.sum(y) == 0:
         print("Error:Y vector all zeros....(PCA_getFuncValue)")
         return None
 
-
-    non_zero_count=0.0
+    non_zero_count = 0.0
     for i in range(len(x)):
-        if x[i]>0.0 and x[i]<1.0: non_zero_count+=1.0
-    if non_zero_count>0.0:
+        if x[i] > 0.0 and x[i] < 1.0: non_zero_count += 1.0
+    if non_zero_count > 0.0:
         xTW = W.T.dot(x)
     else:
-        xTW = median_WTx(x,W)
-
+        xTW = median_WTx(x, W)
 
     Ix = np.ones(len(x))
     xT1 = np.sum(x)
@@ -382,19 +380,21 @@ def PCA_gradientY(x,y,W,A,lambda0=0.0,adjust=0.0):
     # print(len(xW_1Tx))
     # print len(W.transpose()),len(W.transpose()[0])
     # print len(np.outer(xW_1Tx,Ix)),len(np.outer(xW_1Tx,Ix)[0])
-    term1 = (1.0 / (sigmas1+adjust)) * (np.multiply(W.transpose() - np.outer(xW_1Tx,Ix), W.transpose() - np.outer(xW_1Tx,Ix))).dot(x)
+    term1 = (1.0 / (sigmas1 + adjust)) * (
+        np.multiply(W.transpose() - np.outer(xW_1Tx, Ix), W.transpose() - np.outer(xW_1Tx, Ix))).dot(x)
     term2 = (1.0 / sigmas2) * np.multiply(W.transpose(), W.transpose()).dot(x)
     # print len(term1),len(term2)
-    gradient=term1-term2
+    gradient = term1 - term2
 
     return gradient
 
-def PCA_multiGradientDecent4PCAScore(x0,y0,OmegaX,OmegaY,W,A,lambda0,maxIter=100,stepSize=0.01):
+
+def PCA_multiGradientDecent4PCAScore(x0, y0, OmegaX, OmegaY, W, A, lambda0, maxIter=100, stepSize=0.1):
     # print("Start argmin f(x,y) ...")
-    indicatorX = getIndicateVector(OmegaX,len(x0))
+    indicatorX = getIndicateVector(OmegaX, len(x0))
     indicatorY = getIndicateVector(OmegaY, len(y0))
-    x=copy.deepcopy(x0)
-    y=copy.deepcopy(y0)
+    x = copy.deepcopy(x0)
+    y = copy.deepcopy(y0)
     for i in xrange(maxIter):
         # t=0.0
         # while True:
@@ -412,65 +412,63 @@ def PCA_multiGradientDecent4PCAScore(x0,y0,OmegaX,OmegaY,W,A,lambda0,maxIter=100
 
         xOld = copy.deepcopy(x)
         yOld = copy.deepcopy(y)
-        x = updatedMinimizerX(gradientX,indicatorX,x,stepSize,5)
-        y = updatedMinimizerY(gradientY, indicatorY,y,stepSize,5)
+        x = updatedMinimizerX(gradientX, indicatorX, x, stepSize, 5)
+        y = updatedMinimizerY(gradientY, indicatorY, y, stepSize, 5)
 
-        diffNormX = np.linalg.norm(x-xOld)
-        diffNormY = np.linalg.norm(y-yOld)
+        diffNormX = np.linalg.norm(x - xOld)
+        diffNormY = np.linalg.norm(y - yOld)
         # if i % 100 == 0: print("processes: {}".format(i))
 
-        if diffNormX<=1e-6  and diffNormY<=1e-6:break
+        if diffNormX <= 1e-6 and diffNormY <= 1e-6: break
+
+    return (x, y)
 
 
-
-
-    return (x,y)
-
-
-def updatedMinimizerX(gradientX,indicatorX,x,stepSize,bound=5):
-    normalizedX= (x - stepSize*gradientX)*indicatorX
-    indexes=normalizedX.argsort()[::-1]
-    cnt=0
+def updatedMinimizerX(gradientX, indicatorX, x, stepSize, bound=5):
+    normalizedX = (x - stepSize * gradientX) * indicatorX
+    indexes = normalizedX.argsort()[::-1]
+    cnt = 0
     for j in xrange(len(x)):
-        if normalizedX[j]<=0.0:
-            cnt+=1.0
-            normalizedX[j]=0.0
-        elif normalizedX[j]>=1.0:
-            normalizedX[j]=1.0
-    if cnt==len(x):
+        if normalizedX[j] <= 0.0:
+            cnt += 1.0
+            normalizedX[j] = 0.0
+        elif normalizedX[j] >= 1.0:
+            normalizedX[j] = 1.0
+    if cnt == len(x):
         # print("!!!!!Warning: Sigmas1 is too large and all values in the gradient vector are nonpositive!!!")
         for i in xrange(bound):
-            normalizedX[indexes[i]]=1.0
+            normalizedX[indexes[i]] = 1.0
 
     return normalizedX
 
 
-def updatedMinimizerY(gradientY,indicatorY,y,stepSize,bound=5):
-    normalizedY= (y - stepSize*gradientY)*indicatorY
-    indexes=normalizedY.argsort()[::-1]
-    cnt=0
+def updatedMinimizerY(gradientY, indicatorY, y, stepSize, bound=5):
+    normalizedY = (y - stepSize * gradientY) * indicatorY
+    indexes = normalizedY.argsort()[::-1]
+    cnt = 0
     for j in xrange(len(y)):
-        if normalizedY[j]<=0.0:
-            cnt+=1.0
-            normalizedY[j]=0.0
-        elif normalizedY[j]>=1.0:
-            normalizedY[j]=1.0
-    if cnt==len(y):
+        if normalizedY[j] <= 0.0:
+            cnt += 1.0
+            normalizedY[j] = 0.0
+        elif normalizedY[j] >= 1.0:
+            normalizedY[j] = 1.0
+    if cnt == len(y):
         # print("!!!!!Warning: Sigmas1 is too small and all values in the gradient vector are nonpositive!!!")
         for i in xrange(bound):
-            normalizedY[indexes[i]]=1.0
+            normalizedY[indexes[i]] = 1.0
 
     return normalizedY
 
-def median_WTx(x,W):
-    medians=np.zeros_like(W[0])
 
-    S=list(getSupp(x))
+def median_WTx(x, W):
+    medians = np.zeros_like(W[0])
+
+    S = list(getSupp(x))
     for i in range(len(W[0])):
-        vals=np.zeros(len(S))
-        for k,j in enumerate(S):
-            vals[k]=x[j]*W[j][i]
-        medians[i]=np.percentile(vals,50)*np.sum(x)
+        vals = np.zeros(len(S))
+        for k, j in enumerate(S):
+            vals[k] = x[j] * W[j][i]
+        medians[i] = np.percentile(vals, 50) * np.sum(x)
     # print S
     # print medians
     # time.sleep(1000)
@@ -493,33 +491,34 @@ output:
 """
 
 
-def sg_pursuit_dense(edges, edgeCost, k, s, W,A,lambda0, maxIter, g):
+def sg_pursuit_dense(edges, edgeCost, k, s, W, A, lambda0, maxIter, g):
     start_time = time.time()
     num_nodes = len(W)
     num_feats = len(W[0])
-    print("num_nodes:%d num_feat:%d"%(num_nodes,num_feats))
+
     # initialize values x0,y0
     # xi = np.zeros(num_nodes)
     # yi = np.zeros(num_feats)
     # for i in random.choice(range(num_nodes), k): xi[i] = random.random()
     # for i in random.choice(range(num_feats), s): xi[i] = random.random()
-    (xi,yi)=calcualte_initial_val(W,A,num_nodes,num_feats,20,3) #W,A,n,p,k,s
-    # print sum(xi),len(getSupp(xi))
+    (xi, yi) = calcualte_initial_val(W, A, num_nodes, num_feats, 20, 3)  # W,A,n,p,k,s
+    # print sum(xi),len(getSupp(xi)),xi
     # print sum(yi),len(getSupp(yi))
     # time.sleep(100)
-    old_func_value=-1
-    func_value=-1
+    old_func_value = -1
+    func_value = -1
     for numOfIter in range(maxIter):
         # print("SG-Pursuit: Iteration:------{}------".format(numOfIter))
 
         # calcualte normalized gradient
-        t0=time.time()
-        gradientFx = PCA_gradientX(xi, yi,W,A,lambda0)
-        gradientFy = PCA_gradientY(xi, yi,W,A,lambda0)
+        t0 = time.time()
+        gradientFx = PCA_gradientX(xi, yi, W, A, lambda0)
+        gradientFy = PCA_gradientY(xi, yi, W, A, lambda0)
         gradientFx = normalized_Gradient(xi, gradientFx)
         gradientFy = normalized_Gradient(yi, gradientFy)
         """Algorithm 1: line 6 """
-        (result_nodes, result_edges, p_x) = head_proj(edges=edges, weights=edgeCost, x=gradientFx, g=g, s=k, budget=k-1.,
+        (result_nodes, result_edges, p_x) = head_proj(edges=edges, weights=edgeCost, x=gradientFx, g=g, s=k,
+                                                      budget=k - 1.,
                                                       delta=1. / 169., err_tol=1e-6, max_iter=50, root=-1,
                                                       pruning='strong', epsilon=1e-6, verbose=0)
         gammaX = set(result_nodes)
@@ -531,11 +530,12 @@ def sg_pursuit_dense(edges, edgeCost, k, s, W,A,lambda0, maxIter, g):
         """line 9"""
         omegaY = gammaY.union(getSupp(yi))
         """line 10"""
-        (bx, by) = PCA_multiGradientDecent4PCAScore(xi, yi, omegaX, omegaY, W,A,lambda0, maxIter=1000, stepSize=0.01)
+        (bx, by) = PCA_multiGradientDecent4PCAScore(xi, yi, omegaX, omegaY, W, A, lambda0, maxIter=1000, stepSize=0.01)
         """line 11"""
-        (result_nodes, result_edges, p_x) = tail_proj(edges=edges, weights=edgeCost, x=bx, g=1, s=k, budget=k - 1., nu=2.5,
-            max_iter=50, err_tol=1e-6, root=-1, pruning='strong', verbose=0,
-            epsilon=1e-6)
+        (result_nodes, result_edges, p_x) = tail_proj(edges=edges, weights=edgeCost, x=bx, g=1, s=k, budget=k - 1.,
+                                                      nu=2.5,
+                                                      max_iter=50, err_tol=1e-6, root=-1, pruning='strong', verbose=0,
+                                                      epsilon=1e-6)
         psiX = set(result_nodes)
         """line 12"""
         psiY = identifyDirection(by, s)
@@ -548,19 +548,19 @@ def sg_pursuit_dense(edges, edgeCost, k, s, W,A,lambda0, maxIter, g):
         """line 14"""
         yi = projectionOnVector(by, psiY)
 
-        func_value = PCA_getFuncValue(xi, yi, W,A,lambda0)
+        func_value = PCA_getFuncValue(xi, yi, W, A, lambda0)
 
-        if old_func_value==-1:
-            old_func_value=func_value
+        if old_func_value == -1:
+            old_func_value = func_value
         else:
-            if np.abs(old_func_value-func_value)<0.001:
+            if np.abs(old_func_value - func_value) < 0.001:
                 break
             else:
-                old_func_value=func_value
+                old_func_value = func_value
 
     running_time = time.time() - start_time
 
-    return xi, yi,running_time,func_value
+    return xi, yi, running_time, func_value
 
 
 """************************************************************************************************
@@ -568,10 +568,11 @@ Experiment codes
 
 *************************************************************************************************"""
 
-
 """
 Multi-procesing 
 """
+
+
 class Consumer(multiprocessing.Process):
     def __init__(self, task_queue, result_queue):
         multiprocessing.Process.__init__(self)
@@ -591,51 +592,53 @@ class Consumer(multiprocessing.Process):
             self.result_queue.put(answer)
         return
 
+
 class task_sg_pursuit(object):
-    def __init__(self, edges, edgeCost, k, s, W,A,lambda0,true_subgraph,true_feats,case, maxIter, g):
+    def __init__(self, edges, edgeCost, k, s, W, A, lambda0, true_subgraph, true_feats, case, maxIter, g):
         self.edges = edges
-        self.edgeCost=edgeCost
-        self.k=k
+        self.edgeCost = edgeCost
+        self.k = k
         self.s = s
         self.W = W
         self.A = A
         self.lambda0 = lambda0
         self.maxIter = maxIter
         self.g = g
-        self.case=case
-        self.true_subgraph=true_subgraph
-        self.true_feats=true_feats
+        self.case = case
+        self.true_subgraph = true_subgraph
+        self.true_feats = true_feats
 
     def __call__(self):
         # this is the place to do your work
         # time.sleep(0.1) # pretend to take some time to do our work
-        #admm(omega, b, X_b, y_t, Y, X, edge_up_nns,edge_down_nns, omega_0, R, dict_paths, psl, approx, report_stat)
-        xi, yi, running_time,func_value = sg_pursuit_dense(self.edges, self.edgeCost, self.k, self.s, self.W,self.A,self.lambda0, self.maxIter, self.g)
-        return xi, yi, running_time,self.true_subgraph,self.true_feats,self.case,func_value
+        # admm(omega, b, X_b, y_t, Y, X, edge_up_nns,edge_down_nns, omega_0, R, dict_paths, psl, approx, report_stat)
+        xi, yi, running_time, func_value = sg_pursuit_dense(self.edges, self.edgeCost, self.k, self.s, self.W, self.A,
+                                                            self.lambda0, self.maxIter, self.g)
+        return xi, yi, running_time, self.true_subgraph, self.true_feats, self.case, func_value
 
     def __str__(self):
         return '%s' % (self.p0)
 
 
-
-def adj_matrix(edges,n):
-    A=np.zeros((n,n))
-    for (e1,e2) in edges:
-        A[e1][e2]=1.0
+def adj_matrix(edges, n):
+    A = np.zeros((n, n))
+    for (e1, e2) in edges:
+        A[e1][e2] = 1.0
         A[e2][e1] = 1.0
 
     return A
 
+
 def test_varying_num_attr():
-    data_folder="../input/dense_supgraph/simu_fig4/"
-    out_file="result-VaryingAtt-adjust.txt"
-    with open("../output/"+out_file, "a+") as op:
-        op.write("\n\n###  "+str(datetime.datetime.now())+"  ###\n")
-    for num_feat in [20,40,80,100][:]:
-        node_prf=[[],[],[]]
-        feat_prf=[[],[],[]]
-        running_times=[]
-        filename="VaryingAttribute_numAtt_%d.pkl"%(num_feat)
+    data_folder = "../input/dense_supgraph/simu_fig4/"
+    out_file = "result-VaryingAtt-new.txt"
+    with open("../output/" + out_file, "a+") as op:
+        op.write("\n\n###  " + str(datetime.datetime.now()) + "  ###\n")
+    for num_feat in [20, 40, 80, 100][:]:
+        node_prf = [[], [], []]
+        feat_prf = [[], [], []]
+        running_times = []
+        filename = "VaryingAttribute_numAtt_%d.pkl" % (num_feat)
         datas = cPickle.load(bz2.BZ2File(data_folder + filename))
         num_jobs = 0
         tasks = multiprocessing.Queue()
@@ -649,30 +652,32 @@ def test_varying_num_attr():
         for w in consumers:
             w.start()
 
-        for case,data in datas.items()[:]:
-            k=len(data["true_sub_graph"])/2
-            s=len(data["true_sub_feature"])
-            lambda0=5.0
-            A=adj_matrix(data["edges"],data["n"])
+        for case, data in datas.items()[:]:
+            k = len(data["true_sub_graph"]) / 2
+            s = len(data["true_sub_feature"])
+            lambda0 = 5.0
+            A = adj_matrix(data["edges"], data["n"])
             # print(data["true_sub_graph"])
             # print(data["true_sub_feature"])
-            #edges, edgeCost, k, s, W,A,lambda0, maxIter=5, g=1.0, B=3.
+            # edges, edgeCost, k, s, W,A,lambda0, maxIter=5, g=1.0, B=3.
             # xi,yi,running_time=sg_pursuit_dense(data["edges"], data["costs"], k, s,data["data_matrix"] ,A, lambda0, maxIter=5, g=1)
-            tasks.put(task_sg_pursuit(data["edges"], data["costs"], k, s,data["data_matrix"] ,A, lambda0,data['true_sub_graph'],data['true_sub_feature'],case, maxIter=5, g=1))
-            num_jobs +=1.0
-            data={}
+            tasks.put(task_sg_pursuit(data["edges"], data["costs"], k, s, data["data_matrix"], A, lambda0,
+                                      data['true_sub_graph'], data['true_sub_feature'], case, maxIter=5, g=1))
+            num_jobs += 1.0
+            # data={}
 
         for i in range(num_consumers):
             tasks.put(None)
         while num_jobs:
-            xi,yi,running_time,true_subgraph,true_feats,case,func_value = results.get()
+            xi, yi, running_time, true_subgraph, true_feats, case, func_value = results.get()
             n_pre_rec_fm = node_pre_rec_fm(
                 true_nodes=true_subgraph,
                 pred_nodes=np.nonzero(xi)[0])
             f_pre_rec_fm = node_pre_rec_fm(
                 true_nodes=true_feats,
                 pred_nodes=np.nonzero(yi)[0])
-            print("Case:{}, Node:{} ,Feat:{} ,Func_value:{} ,Running:{} ".format(case,n_pre_rec_fm,f_pre_rec_fm,func_value,running_time))
+            print("Case:{}, Node:{} ,Feat:{} ,Func_value:{} ,Running:{} ".format(case, n_pre_rec_fm, f_pre_rec_fm,
+                                                                                 func_value, running_time))
             node_prf[0].append(n_pre_rec_fm[0])
             node_prf[1].append(n_pre_rec_fm[1])
             node_prf[2].append(n_pre_rec_fm[2])
@@ -682,25 +687,25 @@ def test_varying_num_attr():
             feat_prf[2].append(f_pre_rec_fm[2])
 
             running_times.append(running_time)
-            num_jobs-=1.0
+            num_jobs -= 1.0
 
+        print(">>VaryingAtt: %d %.2f %.2f %.2fn" % (
+        num_feat, np.mean(node_prf[2]), np.mean(feat_prf[2]), round(np.mean(running_times), 2)))
+        with open("../output/" + out_file, "a+") as op:
+            op.write("VaryingAtt: %d %.2f %.2f %.2f\n" % (
+            num_feat, np.mean(node_prf[2]), np.mean(feat_prf[2]), round(np.mean(running_times), 2)))
 
-
-
-        print(">>VaryingAtt: %d %f %f %f\n"%(num_feat,np.mean(node_prf[2]),np.mean(feat_prf[2]),round(np.mean(running_times),2)))
-        with open("../output/"+out_file,"a+") as op:
-            op.write("VaryingAtt: %d %f %f %f\n"%(num_feat,np.mean(node_prf[2]),np.mean(feat_prf[2]),round(np.mean(running_times),2)))
 
 def test_varying_num_cluster():
-    data_folder="../input/dense_supgraph/simu_fig4/"
-    out_file="result-VaryingNumCluster-adjust.txt"
-    with open("../output/"+out_file, "a+") as op:
-        op.write("\n\n###  "+str(datetime.datetime.now())+"  ###\n")
-    for num_cluster in [10,12,14,15,20,25][:]:
-        node_prf=[[],[],[]]
-        feat_prf=[[],[],[]]
-        running_times=[]
-        filename="VaryingNumClusters_numCluster_%d.pkl"%(num_cluster)
+    data_folder = "../input/dense_supgraph/simu_fig4/"
+    out_file = "result-VaryingNumCluster-new.txt"
+    with open("../output/" + out_file, "a+") as op:
+        op.write("\n\n###  " + str(datetime.datetime.now()) + "  ###\n")
+    for num_cluster in [10, 12, 14, 15, 20, 25][:]:
+        node_prf = [[], [], []]
+        feat_prf = [[], [], []]
+        running_times = []
+        filename = "VaryingNumClusters_numCluster_%d.pkl" % (num_cluster)
         datas = cPickle.load(bz2.BZ2File(data_folder + filename))
         num_jobs = 0
         tasks = multiprocessing.Queue()
@@ -721,7 +726,8 @@ def test_varying_num_cluster():
             # edges, edgeCost, k, s, W,A,lambda0, maxIter=5, g=1.0, B=3.
             # xi,yi,running_time=sg_pursuit_dense(data["edges"], data["costs"], k, s,data["data_matrix"] ,A, lambda0, maxIter=5, g=1)
             tasks.put(
-                task_sg_pursuit(data["edges"], data["costs"], k, s,data["data_matrix"] ,A, lambda0,data['true_sub_graph'],data['true_sub_feature'],case, maxIter=5, g=1))
+                task_sg_pursuit(data["edges"], data["costs"], k, s, data["data_matrix"], A, lambda0,
+                                data['true_sub_graph'], data['true_sub_feature'], case, maxIter=5, g=1))
             num_jobs += 1.0
 
         for i in range(num_consumers):
@@ -748,19 +754,22 @@ def test_varying_num_cluster():
             running_times.append(running_time)
             num_jobs -= 1.0
 
-        print("VaryingNumCluster: num_attirbute:%d avg_node_fm:%f   avg_feat_fm%f avg_runtime:%f"%(num_cluster,np.mean(node_prf[2]),np.mean(feat_prf[2]),round(np.mean(running_times),2)))
-        with open("../output/"+out_file,"a+") as op:
-            op.write("VaryingNumCluster %f %f %f %f\n"%(num_cluster,np.mean(node_prf[2]),np.mean(feat_prf[2]),round(np.mean(running_times),2)))
+        print("VaryingNumCluster: num_attirbute:%d avg_node_fm:%.2f   avg_feat_fm %.2f avg_runtime:%.2f" % (
+        num_cluster, np.mean(node_prf[2]), np.mean(feat_prf[2]), round(np.mean(running_times), 2)))
+        with open("../output/" + out_file, "a+") as op:
+            op.write("VaryingNumCluster %d %.2f %.2f %.2f\n" % (
+            num_cluster, np.mean(node_prf[2]), np.mean(feat_prf[2]), round(np.mean(running_times), 2)))
+
 
 def test_varying_cluster_size():
-    data_folder="../input/dense_supgraph/simu_fig4/"
-    out_file="result-VaryingClusterSize.txt"
-    with open("../output/"+out_file, "a+") as op:
-        op.write("\n\n###  "+str(datetime.datetime.now())+"  ###\n")
-    for cluster_sizes in [(30,100),(30,150),(30,200),(30,300),(30,400)][4:]:
-        node_prf=[[],[],[]]
-        feat_prf=[[],[],[]]
-        running_times=[]
+    data_folder = "../input/dense_supgraph/simu_fig4/"
+    out_file = "result-VaryingClusterSize-new.txt"
+    with open("../output/" + out_file, "a+") as op:
+        op.write("\n\n###  " + str(datetime.datetime.now()) + "  ###\n")
+    for cluster_sizes in [(30, 100), (30, 150), (30, 200), (30, 300), (30, 400)][:]:
+        node_prf = [[], [], []]
+        feat_prf = [[], [], []]
+        running_times = []
         num_jobs = 0
         tasks = multiprocessing.Queue()
         results = multiprocessing.Queue()
@@ -772,7 +781,7 @@ def test_varying_cluster_size():
         for w in consumers:
             w.start()
         for case in range(50)[:]:
-            filename="VaryingClusterSizes_numCluster_%d_%d_case-%d.pkl"%(cluster_sizes[0],cluster_sizes[1],case)
+            filename = "VaryingClusterSizes_numCluster_%d_%d_case-%d.pkl" % (cluster_sizes[0], cluster_sizes[1], case)
             try:
                 data = cPickle.load(bz2.BZ2File(data_folder + filename))
             except:
@@ -783,12 +792,11 @@ def test_varying_cluster_size():
             lambda0 = 5.0
             A = adj_matrix(data["edges"], data["n"])
 
-
-
             # edges, edgeCost, k, s, W,A,lambda0, maxIter=5, g=1.0, B=3.
             # xi,yi,running_time=sg_pursuit_dense(data["edges"], data["costs"], k, s,data["data_matrix"] ,A, lambda0, maxIter=5, g=1)
             tasks.put(
-                task_sg_pursuit(data["edges"], data["costs"], k, s,data["data_matrix"] ,A, lambda0,data['true_sub_graph'],data['true_sub_feature'],case, maxIter=5, g=1))
+                task_sg_pursuit(data["edges"], data["costs"], k, s, data["data_matrix"], A, lambda0,
+                                data['true_sub_graph'], data['true_sub_feature'], case, maxIter=5, g=1))
             num_jobs += 1.0
 
         for i in range(num_consumers):
@@ -815,19 +823,18 @@ def test_varying_cluster_size():
             running_times.append(running_time)
             num_jobs -= 1.0
 
-        print("VaryingClusterSize: cluster size:%d - %d avg_node_fm:%f   avg_feat_fm%f avg_runtime:%f"%(cluster_sizes[0],cluster_sizes[0],np.mean(node_prf[2]),np.mean(feat_prf),np.mean(running_times)))
-        with open("../output/"+out_file,"a+") as op:
-            op.write("VaryingClusterSize %d_%d %f %f %f\n"%(cluster_sizes[0],cluster_sizes[1],np.mean(node_prf[2]),np.mean(feat_prf),round(np.mean(running_times),2)))
-
-
+        print("VaryingClusterSize: cluster size:%d - %d avg_node_fm:%.2f   avg_feat_fm%.2f avg_runtime:%.2f" % (
+        cluster_sizes[0], cluster_sizes[1], np.mean(node_prf[2]), np.mean(feat_prf), np.mean(running_times)))
+        with open("../output/" + out_file, "a+") as op:
+            op.write("VaryingClusterSize %d_%d %.2f %.2f %.2f\n" % (
+            cluster_sizes[0], cluster_sizes[1], np.mean(node_prf[2]), np.mean(feat_prf),
+            round(np.mean(running_times), 2)))
 
 
 def main():
-    # test_varying_num_attr()
+    test_varying_num_attr()
     # test_varying_num_cluster()
-    test_varying_cluster_size()
-
-
+    # test_varying_cluster_size()
 
 
 if __name__ == '__main__':
