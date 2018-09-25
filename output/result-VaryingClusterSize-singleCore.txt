@@ -1,0 +1,8 @@
+
+
+###  2018-09-25 04:21:55.004250  ###
+VaryingClusterSize 30_100 1.00 0.95 47.38
+VaryingClusterSize 30_150 0.96 0.91 73.64
+VaryingClusterSize 30_200 0.98 0.92 88.06
+VaryingClusterSize 30_300 0.96 0.91 141.76
+VaryingClusterSize 30_400 0.96 0.92 211.33

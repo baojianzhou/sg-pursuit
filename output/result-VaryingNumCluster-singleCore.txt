@@ -1,0 +1,9 @@
+
+
+###  2018-09-24 22:41:21.890418  ###
+VaryingNumCluster 10 0.94 0.90 34.27
+VaryingNumCluster 12 1.00 0.94 51.64
+VaryingNumCluster 14 0.97 0.92 62.96
+VaryingNumCluster 15 0.94 0.91 68.09
+VaryingNumCluster 20 0.83 0.80 90.00
+VaryingNumCluster 25 0.70 0.72 100.30

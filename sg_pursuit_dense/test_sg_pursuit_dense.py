@@ -492,10 +492,10 @@ output:
 
 
 def sg_pursuit_dense(edges, edgeCost, k, s, W, A, lambda0, maxIter, g):
-    start_time = time.time()
+    9999 = time.time()
     num_nodes = len(W)
     num_feats = len(W[0])
-
+    print(num_nodes,num_feats)
     # initialize values x0,y0
     # xi = np.zeros(num_nodes)
     # yi = np.zeros(num_feats)
@@ -631,7 +631,7 @@ def adj_matrix(edges, n):
 
 def test_varying_num_attr():
     data_folder = "../input/dense_supgraph/simu_fig4/"
-    out_file = "result-VaryingAtt-new.txt"
+    out_file = "result-VaryingAtt-new2.txt"
     with open("../output/" + out_file, "a+") as op:
         op.write("\n\n###  " + str(datetime.datetime.now()) + "  ###\n")
     for num_feat in [20, 40, 80, 100][:]:
@@ -645,7 +645,7 @@ def test_varying_num_attr():
         results = multiprocessing.Queue()
         # Start consumers
 
-        num_consumers = 50  # number of cores
+        num_consumers = 1  # number of cores
         print num_feat, 'Creating %d consumers' % num_consumers
         consumers = [Consumer(tasks, results)
                      for i in range(num_consumers)]
@@ -689,7 +689,7 @@ def test_varying_num_attr():
             running_times.append(running_time)
             num_jobs -= 1.0
 
-        print(">>VaryingAtt: %d %.2f %.2f %.2fn" % (
+        print(">>VaryingAtt: %d %.2f %.2f %.2f" % (
         num_feat, np.mean(node_prf[2]), np.mean(feat_prf[2]), round(np.mean(running_times), 2)))
         with open("../output/" + out_file, "a+") as op:
             op.write("VaryingAtt: %d %.2f %.2f %.2f\n" % (
@@ -698,7 +698,7 @@ def test_varying_num_attr():
 
 def test_varying_num_cluster():
     data_folder = "../input/dense_supgraph/simu_fig4/"
-    out_file = "result-VaryingNumCluster-new.txt"
+    out_file = "result-VaryingNumCluster-new2.txt"
     with open("../output/" + out_file, "a+") as op:
         op.write("\n\n###  " + str(datetime.datetime.now()) + "  ###\n")
     for num_cluster in [10, 12, 14, 15, 20, 25][:]:
@@ -711,7 +711,7 @@ def test_varying_num_cluster():
         tasks = multiprocessing.Queue()
         results = multiprocessing.Queue()
         # Start consumers
-        num_consumers = 50  # number of cores.
+        num_consumers = 1  # number of cores.
         print num_cluster, 'Creating %d consumers' % num_consumers
         consumers = [Consumer(tasks, results)
                      for i in range(num_consumers)]
@@ -763,7 +763,7 @@ def test_varying_num_cluster():
 
 def test_varying_cluster_size():
     data_folder = "../input/dense_supgraph/simu_fig4/"
-    out_file = "result-VaryingClusterSize-new.txt"
+    out_file = "result-VaryingClusterSize-new2.txt"
     with open("../output/" + out_file, "a+") as op:
         op.write("\n\n###  " + str(datetime.datetime.now()) + "  ###\n")
     for cluster_sizes in [(30, 100), (30, 150), (30, 200), (30, 300), (30, 400)][:]:
@@ -774,7 +774,7 @@ def test_varying_cluster_size():
         tasks = multiprocessing.Queue()
         results = multiprocessing.Queue()
         # Start consumers
-        num_consumers = 50  # number of cores.
+        num_consumers = 1  # number of cores.
         print cluster_sizes, 'Creating %d consumers' % num_consumers
         consumers = [Consumer(tasks, results)
                      for i in range(num_consumers)]
@@ -833,8 +833,8 @@ def test_varying_cluster_size():
 
 def main():
     test_varying_num_attr()
-    # test_varying_num_cluster()
-    # test_varying_cluster_size()
+    test_varying_num_cluster()
+    test_varying_cluster_size()
 
 
 if __name__ == '__main__':
