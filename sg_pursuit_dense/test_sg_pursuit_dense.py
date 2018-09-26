@@ -5,6 +5,8 @@ import numpy as np
 import time, datetime
 import copy
 import multiprocessing
+import mkl
+mkl.set_num_threads(2)
 
 # from sg_pursuit_dense import *
 # from utils.base_function import *
@@ -492,7 +494,7 @@ output:
 
 
 def sg_pursuit_dense(edges, edgeCost, k, s, W, A, lambda0, maxIter, g):
-    9999 = time.time()
+    start_time = time.time()
     num_nodes = len(W)
     num_feats = len(W[0])
     print(num_nodes,num_feats)
@@ -638,6 +640,7 @@ def test_varying_num_attr():
         node_prf = [[], [], []]
         feat_prf = [[], [], []]
         running_times = []
+        """Each .pkl file includes 50 test cases"""
         filename = "VaryingAttribute_numAtt_%d.pkl" % (num_feat)
         datas = cPickle.load(bz2.BZ2File(data_folder + filename))
         num_jobs = 0
@@ -705,6 +708,7 @@ def test_varying_num_cluster():
         node_prf = [[], [], []]
         feat_prf = [[], [], []]
         running_times = []
+        """Each .pkl file includes 50 test cases"""
         filename = "VaryingNumClusters_numCluster_%d.pkl" % (num_cluster)
         datas = cPickle.load(bz2.BZ2File(data_folder + filename))
         num_jobs = 0
@@ -781,6 +785,7 @@ def test_varying_cluster_size():
         for w in consumers:
             w.start()
         for case in range(50)[:]:
+            """Each .pkl file includes single test case"""
             filename = "VaryingClusterSizes_numCluster_%d_%d_case-%d.pkl" % (cluster_sizes[0], cluster_sizes[1], case)
             try:
                 data = cPickle.load(bz2.BZ2File(data_folder + filename))
