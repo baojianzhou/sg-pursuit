@@ -116,7 +116,9 @@ class FuncEMS(object):
     @staticmethod
     def update_minimizer(grad_x, indicator_x, x, bound, step_size):
         normalized_x = (x - step_size * grad_x) * indicator_x
-        sorted_indices = np.argsort(normalized_x)
+        # previously, there was a bug here. np.argsort(normalized_x) should be
+        # np.argsort(normalized_x)[::-1]
+        sorted_indices = np.argsort(normalized_x)[::-1]
         num_non_posi = len(np.where(normalized_x <= 0.0))
         normalized_x[normalized_x <= 0.0] = 0.
         normalized_x[normalized_x > 1.] = 1.
