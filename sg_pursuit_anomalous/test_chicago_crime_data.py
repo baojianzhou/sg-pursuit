@@ -117,7 +117,11 @@ class FuncEMS(object):
     def update_minimizer(grad_x, indicator_x, x, bound, step_size):
         normalized_x = (x - step_size * grad_x) * indicator_x
         # previously, there was a bug here. np.argsort(normalized_x) should be
-        # np.argsort(normalized_x)[::-1]
+        # np.argsort(normalized_x)[::-1], please check: the Java version at:
+        # https://github.com/newera912/SG-Pursuit/blob/master/src/main/java/
+        # edu/albany/cs/scoreFuncs/GradientDescentOpt.java
+        # https://github.com/newera912/SG-Pursuit/blob/master/src/main/java/
+        # edu/albany/cs/base/ArrayIndexComparator.java
         sorted_indices = np.argsort(normalized_x)[::-1]
         num_non_posi = len(np.where(normalized_x <= 0.0))
         normalized_x[normalized_x <= 0.0] = 0.
